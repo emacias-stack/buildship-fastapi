@@ -27,6 +27,16 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Get version information
+VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+MAJOR_MINOR=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' | sed 's/\.[0-9]*$//' || echo "dev")
+GIT_COMMIT=$(git rev-parse --short HEAD)
+
+print_status "Deployment Information:"
+print_status "  Full Version: $VERSION"
+print_status "  Major.Minor: $MAJOR_MINOR"
+print_status "  Git Commit: $GIT_COMMIT"
+
 # Check if .env file exists
 if [ ! -f ".env" ]; then
     print_error ".env file not found. Please create one from env.example"
@@ -45,7 +55,7 @@ for var in "${required_vars[@]}"; do
     fi
 done
 
-print_status "Starting deployment..."
+print_status "Starting deployment for version $MAJOR_MINOR..."
 
 # Build and push Docker image
 print_status "Building and pushing Docker image..."
@@ -53,6 +63,7 @@ make docker-push
 
 # Deploy to production
 print_status "Deploying to production..."
+export MAJOR_MINOR=$MAJOR_MINOR
 make docker-deploy
 
 # Wait for services to be healthy
@@ -70,4 +81,5 @@ fi
 
 print_success "Deployment completed successfully!"
 print_status "Application is available at: http://localhost:8000"
-print_status "Health check: http://localhost:8000/health" 
+print_status "Health check: http://localhost:8000/health"
+print_status "Deployed version: $MAJOR_MINOR" 

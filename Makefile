@@ -1,13 +1,27 @@
-.PHONY: help setup dev test lint format clean docker-build docker-run docker-stop db-init db-start db-reset install-deps run-tests run-integration-tests run-performance-tests docker-push docker-deploy
+.PHONY: help setup dev test lint format clean docker-build docker-run docker-stop db-init db-start db-reset install-deps run-tests run-integration-tests run-performance-tests docker-push docker-deploy version
 
 # Python virtual environment
 VENV_DIR = venv
 PYTHON = $(VENV_DIR)/bin/python
 PIP = $(VENV_DIR)/bin/pip
 
+# Get version from git tags or default to dev
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+MAJOR_MINOR ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' | sed 's/\.[0-9]*$$//' || echo "dev")
+GIT_COMMIT = $(shell git rev-parse --short HEAD)
+GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+REGISTRY = ghcr.io
+REPO_NAME = $(shell git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\).*/\1\/\2/' | sed 's/\.git$$//')
+IMAGE_NAME = $(REGISTRY)/$(REPO_NAME)
+
 # Default target
 help:
 	@echo "Buildship FastAPI - Available Commands:"
+	@echo ""
+	@echo "Version Management:"
+	@echo "  version            - Show current version information"
+	@echo "  docker-build       - Build Docker image locally with version"
+	@echo "  docker-push        - Build and push Docker image to registry with version"
 	@echo ""
 	@echo "Setup & Installation:"
 	@echo "  setup              - Complete project setup (creates venv, installs deps, starts DB, runs tests)"
@@ -28,14 +42,25 @@ help:
 	@echo "  format             - Format code with black and isort"
 	@echo ""
 	@echo "Docker:"
-	@echo "  docker-build       - Build Docker image locally"
-	@echo "  docker-push        - Build and push Docker image to registry"
+	@echo "  docker-build       - Build Docker image locally with version"
+	@echo "  docker-push        - Build and push Docker image to registry with version"
 	@echo "  docker-run         - Run application in Docker"
 	@echo "  docker-deploy      - Deploy to production using docker-compose.prod.yml"
 	@echo "  docker-stop        - Stop all Docker containers"
 	@echo ""
 	@echo "Cleaning:"
 	@echo "  clean              - Clean up generated files and virtual environment"
+
+# Show version information
+version:
+	@echo "Version Information:"
+	@echo "  Full Version: $(VERSION)"
+	@echo "  Major.Minor: $(MAJOR_MINOR)"
+	@echo "  Git Commit: $(GIT_COMMIT)"
+	@echo "  Git Branch: $(GIT_BRANCH)"
+	@echo "  Registry: $(REGISTRY)"
+	@echo "  Repository: $(REPO_NAME)"
+	@echo "  Image Name: $(IMAGE_NAME)"
 
 # Setup virtual environment and install dependencies
 setup:
@@ -129,16 +154,21 @@ format:
 	@venv/bin/black app/ tests/ --line-length=88
 	@venv/bin/isort app/ tests/ --profile=black
 
-# Build Docker image locally
+# Build Docker image locally with version
 docker-build:
-	@echo "Building Docker image..."
-	@docker build -t buildship-fastapi .
+	@echo "Building Docker image $(IMAGE_NAME):$(MAJOR_MINOR)..."
+	@docker build -t $(IMAGE_NAME):$(MAJOR_MINOR) .
+	@docker tag $(IMAGE_NAME):$(MAJOR_MINOR) $(IMAGE_NAME):latest
+	@echo "✅ Built $(IMAGE_NAME):$(MAJOR_MINOR) and $(IMAGE_NAME):latest"
 
-# Build and push Docker image to registry
+# Build and push Docker image to registry with version
 docker-push:
-	@echo "Building and pushing Docker image..."
-	@docker build -t ghcr.io/$(shell git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\).*/\1\/\2/') .
-	@docker push ghcr.io/$(shell git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\).*/\1\/\2/')
+	@echo "Building and pushing Docker image $(IMAGE_NAME):$(MAJOR_MINOR)..."
+	@docker build -t $(IMAGE_NAME):$(MAJOR_MINOR) .
+	@docker tag $(IMAGE_NAME):$(MAJOR_MINOR) $(IMAGE_NAME):latest
+	@docker push $(IMAGE_NAME):$(MAJOR_MINOR)
+	@docker push $(IMAGE_NAME):latest
+	@echo "✅ Pushed $(IMAGE_NAME):$(MAJOR_MINOR) and $(IMAGE_NAME):latest"
 
 # Run application in Docker
 docker-run:
