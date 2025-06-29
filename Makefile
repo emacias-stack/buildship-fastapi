@@ -1,4 +1,4 @@
-.PHONY: help setup dev test lint format clean docker-build docker-run docker-stop db-init db-start db-reset install-deps run-tests run-integration-tests run-performance-tests
+.PHONY: help setup dev test lint format clean docker-build docker-run docker-stop db-init db-start db-reset install-deps run-tests run-integration-tests run-performance-tests docker-push docker-deploy
 
 # Python virtual environment
 VENV_DIR = venv
@@ -28,8 +28,10 @@ help:
 	@echo "  format             - Format code with black and isort"
 	@echo ""
 	@echo "Docker:"
-	@echo "  docker-build       - Build Docker image"
+	@echo "  docker-build       - Build Docker image locally"
+	@echo "  docker-push        - Build and push Docker image to registry"
 	@echo "  docker-run         - Run application in Docker"
+	@echo "  docker-deploy      - Deploy to production using docker-compose.prod.yml"
 	@echo "  docker-stop        - Stop all Docker containers"
 	@echo ""
 	@echo "Cleaning:"
@@ -127,15 +129,26 @@ format:
 	@venv/bin/black app/ tests/ --line-length=88
 	@venv/bin/isort app/ tests/ --profile=black
 
-# Build Docker image
+# Build Docker image locally
 docker-build:
 	@echo "Building Docker image..."
 	@docker build -t buildship-fastapi .
+
+# Build and push Docker image to registry
+docker-push:
+	@echo "Building and pushing Docker image..."
+	@docker build -t ghcr.io/$(shell git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\).*/\1\/\2/') .
+	@docker push ghcr.io/$(shell git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^/]*\).*/\1\/\2/')
 
 # Run application in Docker
 docker-run:
 	@echo "Running application in Docker..."
 	@docker-compose -f docker-compose.prod.yml up -d
+
+# Deploy to production
+docker-deploy:
+	@echo "Deploying to production..."
+	@docker-compose -f docker-compose.prod.yml up -d --force-recreate
 
 # Stop all Docker containers
 docker-stop:

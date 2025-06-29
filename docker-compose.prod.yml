@@ -9,48 +9,42 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-buildship}
       POSTGRES_USER: ${POSTGRES_USER:-buildship_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-buildship_user} -d ${POSTGRES_DB:-buildship}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - buildship_network
     restart: unless-stopped
 
-  # Redis for caching
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: buildship_redis_prod
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    ports:
-      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - buildship_network
     restart: unless-stopped
 
   # FastAPI Application
   app:
-    build: .
+    image: ${DOCKER_IMAGE:-ghcr.io/your-username/buildship-fastapi:latest}
     container_name: buildship_app_prod
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-buildship_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-buildship}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-buildship_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-buildship}}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - SECRET_KEY=${SECRET_KEY}
-      - DEBUG=false
-      - LOG_LEVEL=INFO
-      - ENABLE_METRICS=true
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     ports:
       - "8000:8000"
     depends_on:
@@ -63,19 +57,17 @@ services:
     networks:
       - buildship_network
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Nginx reverse proxy (optional)
+  # Nginx (optional, for load balancing and SSL termination)
   nginx:
     image: nginx:alpine
-    container_name: buildship_nginx
+    container_name: buildship_nginx_prod
     ports:
       - "80:80"
       - "443:443"
@@ -90,9 +82,7 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
 
 networks:
   buildship_network:
