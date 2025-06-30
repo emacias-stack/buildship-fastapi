@@ -1,7 +1,7 @@
 # Multi-stage build for production-ready FastAPI application
 
 # Stage 1: Build stage
-FROM python:3.11-slim as builder
+FROM python:3.11 as builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
