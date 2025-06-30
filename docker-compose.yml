@@ -7,7 +7,7 @@ services:
     container_name: buildship_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-buildship}
-      POSTGRES_USER: ${POSTGRES_USER:-buildship_user}
+      POSTGRES_USER: ${POSTGRES_USER:-fastapi_sample_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-buildship_password}
     ports:
       - "5432:5432"
@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-buildship_user} -d ${POSTGRES_DB:-buildship}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fastapi_sample_user} -d ${POSTGRES_DB:-buildship}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,11 +43,11 @@ services:
     build: .
     container_name: buildship_app
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-buildship_user}:${POSTGRES_PASSWORD:-buildship_password}@postgres:5432/${POSTGRES_DB:-buildship}}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-fastapi_sample_user}:${POSTGRES_PASSWORD:-buildship_password}@postgres:5432/${POSTGRES_DB:-buildship}}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - DEBUG=${DEBUG:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
     ports:
       - "8000:8000"
     depends_on:

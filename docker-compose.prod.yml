@@ -7,12 +7,12 @@ services:
     container_name: buildship_postgres_prod
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-buildship}
-      POSTGRES_USER: ${POSTGRES_USER:-buildship_user}
+      POSTGRES_USER: ${POSTGRES_USER:-fastapi_sample_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-buildship_user} -d ${POSTGRES_DB:-buildship}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fastapi_sample_user} -d ${POSTGRES_DB:-buildship}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,7 +40,7 @@ services:
     image: ${DOCKER_IMAGE:-ghcr.io/your-username/buildship-fastapi:${MAJOR_MINOR:-latest}}
     container_name: buildship_app_prod
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-buildship_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-buildship}}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-fastapi_sample_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-buildship}}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG:-false}
