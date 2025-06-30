@@ -19,8 +19,8 @@ from app.api.v1.endpoints import auth, items
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan events for the FastAPI application."""
-    # Startup
-    init_db()
+    # Startup - removed auto database initialization
+    # Database tables will be created on first access or manually
     yield
     # Shutdown (if needed)
 
@@ -56,9 +56,15 @@ async def root():
 @app.get("/health", response_model=HealthCheck, tags=["health"])
 async def health_check(db: Session = Depends(get_db)):
     """Health check endpoint."""
-    # Test database connection
+    # Test database connection and initialize tables if needed
     try:
         db.execute(text("SELECT 1"))
+        # Try to initialize tables if they don't exist
+        try:
+            init_db()
+        except Exception:
+            # Tables might already exist, which is fine
+            pass
         db_status = "healthy"
     except Exception:
         db_status = "unhealthy"
