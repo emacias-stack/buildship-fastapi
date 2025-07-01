@@ -43,10 +43,16 @@ class Settings(BaseSettings):
     
     # External services
     redis_url: Optional[str] = Field(default=None, env="REDIS_URL")
+    redis_password: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
     
     # Monitoring
     enable_metrics: bool = Field(default=True, env="ENABLE_METRICS")
     metrics_port: int = Field(default=9090, env="METRICS_PORT")
+    
+    # PostgreSQL settings (for docker-compose)
+    postgres_db: Optional[str] = Field(default=None, env="POSTGRES_DB")
+    postgres_user: Optional[str] = Field(default=None, env="POSTGRES_USER")
+    postgres_password: Optional[str] = Field(default=None, env="POSTGRES_PASSWORD")
     
     class Config:
         env_file = ".env"
