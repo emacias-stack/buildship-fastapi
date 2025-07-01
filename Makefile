@@ -33,6 +33,7 @@ help:
 	@echo "Development:"
 	@echo "  dev                - Start development server with hot reload"
 	@echo "  test               - Run all tests (unit + integration)"
+	@echo "  test-coverage      - Run tests with coverage report"
 	@echo "  run-tests          - Run unit tests only"
 	@echo "  run-integration-tests - Run integration tests only"
 	@echo "  run-performance-tests - Run k6 performance tests"
@@ -113,6 +114,11 @@ dev:
 test:
 	@echo "Running all tests..."
 	@venv/bin/python -m pytest tests/ -v --tb=short
+
+# Run tests with coverage
+test-coverage:
+	@echo "Running tests with coverage report..."
+	@venv/bin/python -m pytest --cov=app --cov-report=term-missing --cov-report=html --cov-fail-under=90 tests/
 
 # Run unit tests only
 run-tests:
