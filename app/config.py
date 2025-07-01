@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     
     # Database settings
     database_url: str = Field(env="DATABASE_URL")
-    database_pool_size: int = Field(default=10, env="DATABASE_POOL_SIZE")
-    database_max_overflow: int = Field(default=20, env="DATABASE_MAX_OVERFLOW")
+    database_pool_size: int = Field(default=20, env="DATABASE_POOL_SIZE")
+    database_max_overflow: int = Field(default=40, env="DATABASE_MAX_OVERFLOW")
     
     # Security settings
     secret_key: str = Field(

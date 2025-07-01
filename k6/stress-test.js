@@ -43,12 +43,11 @@ const TEST_USERS = [
 // Helper function to get auth token
 function getAuthToken(userIndex) {
   const user = TEST_USERS[userIndex % TEST_USERS.length];
-  const loginData = {
-    username: user.username,
-    password: user.password,
-  };
+  const loginData = `username=${user.username}&password=${user.password}`;
   
-  const response = http.post(`${BASE_URL}/api/v1/auth/token`, loginData);
+  const response = http.post(`${BASE_URL}/api/v1/auth/token`, loginData, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
   
   if (response.status === 200) {
     return response.json('access_token');

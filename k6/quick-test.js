@@ -7,19 +7,15 @@ const errorRate = new Rate('errors');
 const authTokenTrend = new Trend('auth_token_time');
 const itemCreationTrend = new Trend('item_creation_time');
 
-// Test configuration
+// Quick test configuration - only 1 minute
 export const options = {
   stages: [
-    // Ramp up to 10 users over 30 seconds
-    { duration: '30s', target: 10 },
-    // Stay at 10 users for 1 minute
-    { duration: '1m', target: 10 },
-    // Ramp up to 50 users over 30 seconds
-    { duration: '30s', target: 50 },
-    // Stay at 50 users for 2 minutes
-    { duration: '2m', target: 50 },
-    // Ramp down to 0 users over 30 seconds
-    { duration: '30s', target: 0 },
+    // Ramp up to 5 users over 15 seconds
+    { duration: '15s', target: 5 },
+    // Stay at 5 users for 30 seconds
+    { duration: '30s', target: 5 },
+    // Ramp down to 0 users over 15 seconds
+    { duration: '15s', target: 0 },
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
@@ -31,9 +27,9 @@ export const options = {
 // Test data
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8000';
 const TEST_USER = {
-  username: 'perftest',
-  password: 'perftest123',
-  email: 'perftest@example.com',
+  username: 'quicktest',
+  password: 'quicktest123',
+  email: 'quicktest@example.com',
 };
 
 // Helper function to get auth token
@@ -60,7 +56,7 @@ function createTestUser() {
     email: TEST_USER.email,
     username: TEST_USER.username,
     password: TEST_USER.password,
-    full_name: 'Performance Test User',
+    full_name: 'Quick Test User',
   };
   
   const response = http.post(`${BASE_URL}/api/v1/auth/register`, JSON.stringify(userData), {
@@ -95,7 +91,7 @@ export default function () {
   }
   
   // Test 2: Get items (read operation)
-  const getItems = check(http.get(`${BASE_URL}/api/v1/items/?skip=0&limit=10`, { headers }), {
+  const getItems = check(http.get(`${BASE_URL}/api/v1/items/?skip=0&limit=5`, { headers }), {
     'get items status is 200': (r) => r.status === 200,
     'get items response time < 300ms': (r) => r.timings.duration < 300,
     'get items returns items array': (r) => r.json('items') !== undefined,
@@ -107,9 +103,9 @@ export default function () {
   
   // Test 3: Create item (write operation)
   const itemData = {
-    title: `Performance Test Item ${Date.now()}`,
-    description: 'Created during performance test',
-    price: Math.floor(Math.random() * 1000) + 100,
+    title: `Quick Test Item ${Date.now()}`,
+    description: 'Created during quick test',
+    price: Math.floor(Math.random() * 100) + 10,
   };
   
   const startTime = new Date();
@@ -137,18 +133,18 @@ export default function () {
     errorRate.add(1);
   }
   
-  // Random sleep between requests to simulate real user behavior
-  sleep(Math.random() * 2 + 1); // Sleep between 1-3 seconds
+  // Shorter sleep for quick test
+  sleep(Math.random() * 1 + 0.5); // Sleep between 0.5-1.5 seconds
 }
 
 // Setup function to create test user
 export function setup() {
-  console.log('Setting up performance test...');
+  console.log('Setting up quick test...');
   createTestUser();
-  console.log('Performance test setup complete');
+  console.log('Quick test setup complete');
 }
 
 // Teardown function
 export function teardown(data) {
-  console.log('Performance test completed');
+  console.log('Quick test completed');
 } 

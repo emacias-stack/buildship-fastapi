@@ -148,6 +148,19 @@ run-performance-tests:
 		echo "   Or visit: https://k6.io/docs/getting-started/installation/"; \
 	fi
 
+# Run quick performance test (1 minute)
+run-quick-test:
+	@echo "Running quick performance test (1 minute)..."
+	@if command -v k6 > /dev/null 2>&1; then \
+		k6 run k6/quick-test.js; \
+	else \
+		echo "❌ k6 not found. Please install k6 first:"; \
+		echo "   macOS: brew install k6"; \
+		echo "   Linux: sudo apt-get install k6"; \
+		echo "   Windows: choco install k6"; \
+		echo "   Or visit: https://k6.io/docs/getting-started/installation/"; \
+	fi
+
 # Run linting
 lint:
 	@echo "Running linting checks..."
