@@ -85,6 +85,84 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class APIKeyMiddleware(BaseHTTPMiddleware):
+    """Middleware for API key authentication with Swagger exclusion."""
+    
+    def __init__(self, app, settings):
+        super().__init__(app)
+        self.settings = settings
+        self.api_key_header = settings.api_key_header
+        self.exclude_paths = settings.exclude_api_key_paths
+    
+    async def dispatch(self, request: Request, call_next):
+        # Skip API key check if not enabled
+        if not self.settings.enable_api_key_auth:
+            return await call_next(request)
+        
+        # Skip API key check for Swagger/OpenAPI requests
+        if self._should_skip_api_key_check(request):
+            return await call_next(request)
+        
+        # Check for API key
+        api_key = request.headers.get(self.api_key_header)
+        if not api_key:
+            return Response(
+                status_code=401,
+                content="API key required",
+                headers={"WWW-Authenticate": "ApiKey"}
+            )
+        
+        # Validate API key
+        if not self._validate_api_key(api_key):
+            return Response(
+                status_code=401,
+                content="Invalid API key",
+                headers={"WWW-Authenticate": "ApiKey"}
+            )
+        
+        return await call_next(request)
+    
+    def _should_skip_api_key_check(self, request: Request) -> bool:
+        """Check if API key validation should be skipped."""
+        
+        # Skip for configured exclude paths
+        if any(request.url.path.startswith(path) for path in self.exclude_paths):
+            return True
+        
+        # Skip for Swagger UI requests (check User-Agent)
+        user_agent = request.headers.get("user-agent", "").lower()
+        swagger_user_agents = [
+            "swagger-ui",
+            "swagger",
+            "openapi",
+            "fastapi",
+            "mozilla/5.0"  # Browser requests
+        ]
+        
+        if any(agent in user_agent for agent in swagger_user_agents):
+            return True
+        
+        # Skip for requests coming from Swagger UI (check Referer)
+        referer = request.headers.get("referer", "").lower()
+        if "docs" in referer or "swagger" in referer:
+            return True
+        
+        # Skip for development environment
+        if self.settings.debug:
+            return True
+        
+        # Skip for localhost requests
+        if request.client and request.client.host in ["127.0.0.1", "localhost", "::1"]:
+            return True
+        
+        return False
+    
+    def _validate_api_key(self, api_key: str) -> bool:
+        """Validate the API key."""
+        # Check against configured API keys
+        return api_key in self.settings.api_keys
+
+
 def setup_middleware(app):
     """Setup all middleware for the application."""
     
@@ -105,4 +183,7 @@ def setup_middleware(app):
     
     # Add custom middleware
     app.add_middleware(LoggingMiddleware)
-    app.add_middleware(SecurityHeadersMiddleware) 
+    app.add_middleware(SecurityHeadersMiddleware)
+    
+    # Add API key middleware (conditional)
+    app.add_middleware(APIKeyMiddleware, settings=settings) 

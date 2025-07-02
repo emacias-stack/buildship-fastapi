@@ -54,6 +54,15 @@ class Settings(BaseSettings):
     postgres_user: Optional[str] = Field(default=None, env="POSTGRES_USER")
     postgres_password: Optional[str] = Field(default=None, env="POSTGRES_PASSWORD")
     
+    # API Key settings
+    enable_api_key_auth: bool = Field(default=False, env="ENABLE_API_KEY_AUTH")
+    api_key_header: str = Field(default="x-api-key", env="API_KEY_HEADER")
+    api_keys: list[str] = Field(default=[], env="API_KEYS")
+    exclude_api_key_paths: list[str] = Field(
+        default=["/docs", "/redoc", "/openapi.json", "/health", "/metrics", "/"],
+        env="EXCLUDE_API_KEY_PATHS"
+    )
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

@@ -4,16 +4,20 @@ Main FastAPI application.
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from typing import Optional
 
 from app.config import settings
 from app.database import get_db, init_db
 from app.middleware import setup_middleware
-from app.schemas import HealthCheck
+from app.schemas import HealthCheck, PaginatedResponse
 from app.api.v1.endpoints import auth, items
+from app.auth import get_current_active_user_optional
+from app.crud import get_items, get_items_count
+from app.models import User
 
 
 @asynccontextmanager
@@ -33,6 +37,21 @@ app = FastAPI(
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan,
+    # Remove any global security requirements
+    openapi_tags=[
+        {
+            "name": "public",
+            "description": "Public endpoints that don't require authentication"
+        },
+        {
+            "name": "authentication",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "items",
+            "description": "Items management (requires authentication)"
+        }
+    ]
 )
 
 # Setup middleware
@@ -43,7 +62,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(items.router, prefix="/api/v1/items", tags=["items"])
 
 
-@app.get("/", tags=["root"])
+@app.get("/", tags=["public"])
 async def root():
     """Root endpoint."""
     return {
@@ -53,7 +72,7 @@ async def root():
     }
 
 
-@app.get("/health", response_model=HealthCheck, tags=["health"])
+@app.get("/health", response_model=HealthCheck, tags=["public"])
 async def health_check(db: Session = Depends(get_db)):
     """Health check endpoint."""
     # Test database connection and initialize tables if needed
@@ -77,7 +96,7 @@ async def health_check(db: Session = Depends(get_db)):
     )
 
 
-@app.get("/metrics", tags=["monitoring"])
+@app.get("/metrics", tags=["public"])
 async def metrics():
     """Prometheus metrics endpoint."""
     # This would typically return Prometheus metrics
@@ -86,4 +105,27 @@ async def metrics():
         "app_version": settings.app_version,
         "uptime": "running",
         "database_connections": "active",
-    } 
+    }
+
+
+@app.get("/public/items", response_model=PaginatedResponse, tags=["public"])
+async def read_public_items(
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(10, ge=1, le=100, description="Number of items to return"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_active_user_optional),
+):
+    """Get public list of items (no authentication required)."""
+    items = get_items(db, skip=skip, limit=limit)
+    total = get_items_count(db)
+    
+    pages = (total + limit - 1) // limit
+    page = (skip // limit) + 1
+    
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        size=limit,
+        pages=pages,
+    ) 
