@@ -9,11 +9,6 @@ on:
     # Run tests daily at 2 AM UTC
     - cron: '0 2 * * *'
 
-env:
-  PYTHON_VERSION: '3.11'
-  POSTGRES_VERSION: '15'
-  REDIS_VERSION: '7-alpine'
-
 jobs:
   # Unit and Integration Tests
   test:
@@ -22,7 +17,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:15
         env:
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: testpass
@@ -36,7 +31,7 @@ jobs:
           - 5432:5432
       
       redis:
-        image: redis:${{ env.REDIS_VERSION }}
+        image: redis:7-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -49,10 +44,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
@@ -122,10 +117,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
 
     - name: Cache pip dependencies
       uses: actions/cache@v3

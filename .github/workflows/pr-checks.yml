@@ -4,10 +4,6 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-env:
-  PYTHON_VERSION: '3.11'
-  POSTGRES_VERSION: '15'
-
 jobs:
   # Quick Tests for PR
   quick-tests:
@@ -16,7 +12,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
+        image: postgres:15
         env:
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: testpass
@@ -33,10 +29,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
