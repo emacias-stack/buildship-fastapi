@@ -20,7 +20,9 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine)
+
 
 def override_get_db():
     """Override database dependency for testing."""
@@ -30,11 +32,13 @@ def override_get_db():
     finally:
         db.close()
 
+
 def db_engine():
     """Create test database engine."""
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
+
 
 def db_session(db_engine):
     """Create test database session."""
@@ -48,12 +52,14 @@ def db_session(db_engine):
     transaction.rollback()
     connection.close()
 
+
 def client(db_session):
     """Create test client with database override."""
     app.dependency_overrides[get_db] = lambda: db_session
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
 
 def test_user(db_session):
     """Create a test user."""
@@ -68,6 +74,7 @@ def test_user(db_session):
     db_session.commit()
     db_session.refresh(user)
     return user
+
 
 def test_superuser(db_session):
     """Create a test superuser."""
@@ -84,6 +91,7 @@ def test_superuser(db_session):
     db_session.refresh(user)
     return user
 
+
 def test_item(db_session, test_user):
     """Create a test item."""
     item = Item(
@@ -97,6 +105,7 @@ def test_item(db_session, test_user):
     db_session.refresh(item)
     return item
 
+
 def auth_headers(client, test_user):
     """Get authentication headers for test user."""
     response = client.post(
@@ -106,11 +115,14 @@ def auth_headers(client, test_user):
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
+
 def admin_headers(client, test_superuser):
     """Get authentication headers for admin user."""
     response = client.post(
         "/api/v1/auth/token",
-        data={"username": test_superuser.username, "password": "adminpassword"},
+        data={
+            "username": test_superuser.username,
+            "password": "adminpassword"},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

@@ -28,6 +28,7 @@ FULL_ITEM = {
     }
 }
 
+
 class TestRootEndpoint:
 
     def test_root_endpoint_debug(self):
@@ -46,11 +47,12 @@ class TestRootEndpoint:
             assert data["message"] == "Welcome to Buildship FastAPI"
             assert data["docs"] is None
 
+
 class TestHealthCheck:
 
     def test_health_check_healthy(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.init_db"):
+                patch("app.main.init_db"):
             db = MagicMock()
             db.execute.return_value = None
             mock_get_db.return_value = (x for x in [db])
@@ -68,13 +70,14 @@ class TestHealthCheck:
             response = client.get("/health")
             assert response.status_code == 200
             data = response.json()
-            # Accept either 'unhealthy' or 'healthy' depending on fallback logic
+            # Accept either 'unhealthy' or 'healthy' depending on fallback
+            # logic
             assert data["status"] in ("unhealthy", "healthy")
             assert data["database"] in ("unhealthy", "healthy")
 
     def test_health_check_init_db_exception(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.init_db") as mock_init_db:
+                patch("app.main.init_db") as mock_init_db:
             db = MagicMock()
             db.execute.return_value = None
             mock_init_db.side_effect = Exception("init error")
@@ -84,6 +87,7 @@ class TestHealthCheck:
             data = response.json()
             assert data["status"] == "healthy"
             assert data["database"] == "healthy"
+
 
 class TestMetrics:
 
@@ -95,12 +99,13 @@ class TestMetrics:
         assert data["uptime"] == "running"
         assert data["database_connections"] == "active"
 
+
 class TestPublicItems:
 
     def test_public_items_normal(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.get_items") as mock_get_items, \
-             patch("app.main.get_items_count") as mock_get_items_count:
+                patch("app.main.get_items") as mock_get_items, \
+                patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = [FULL_ITEM]
@@ -116,8 +121,8 @@ class TestPublicItems:
 
     def test_public_items_empty(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.get_items") as mock_get_items, \
-             patch("app.main.get_items_count") as mock_get_items_count:
+                patch("app.main.get_items") as mock_get_items, \
+                patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = []
@@ -133,8 +138,8 @@ class TestPublicItems:
 
     def test_public_items_paging(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.get_items") as mock_get_items, \
-             patch("app.main.get_items_count") as mock_get_items_count:
+                patch("app.main.get_items") as mock_get_items, \
+                patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             # 10 full items
@@ -154,9 +159,9 @@ class TestPublicItems:
 
     def test_public_items_with_user(self):
         with patch("app.main.get_db") as mock_get_db, \
-             patch("app.main.get_items") as mock_get_items, \
-             patch("app.main.get_items_count") as mock_get_items_count, \
-             patch("app.main.get_current_active_user_optional") as mock_user:
+                patch("app.main.get_items") as mock_get_items, \
+                patch("app.main.get_items_count") as mock_get_items_count, \
+                patch("app.main.get_current_active_user_optional") as mock_user:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = [FULL_ITEM]

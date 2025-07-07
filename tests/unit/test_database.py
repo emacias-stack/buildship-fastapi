@@ -17,7 +17,11 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=test_engine)
+
 
 class TestDatabaseSession:
     """Test database session management."""
@@ -57,6 +61,7 @@ class TestDatabaseSession:
             # Verify session was closed
             mock_session.close.assert_called_once()
 
+
 class TestDatabaseInitialization:
     """Test database initialization functions."""
 
@@ -92,6 +97,7 @@ class TestDatabaseInitialization:
             assert mock_drop_db.call_count == 1
             assert mock_init_db.call_count == 1
 
+
 class TestDatabaseEngine:
     """Test database engine configuration."""
 
@@ -117,16 +123,19 @@ class TestDatabaseEngine:
     def test_engine_pool_pre_ping(self):
         """Test that the engine has pool_pre_ping enabled."""
         # Check if pool_pre_ping is configured (it's passed to create_engine)
-        # We can't directly check the attribute, but we can verify the engine was created
+        # We can't directly check the attribute, but we can verify the engine
+        # was created
         assert engine is not None
         assert hasattr(engine, 'pool')
 
     def test_engine_pool_recycle(self):
         """Test that the engine has pool_recycle configured."""
         # Check if pool_recycle is configured (it's passed to create_engine)
-        # We can't directly check the attribute, but we can verify the engine was created
+        # We can't directly check the attribute, but we can verify the engine
+        # was created
         assert engine is not None
         assert hasattr(engine, 'pool')
+
 
 class TestDatabaseIntegration:
     """Integration tests for database operations."""
@@ -136,7 +145,6 @@ class TestDatabaseIntegration:
         # Create a test session
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
         try:
             # Execute a simple query to test connection
             result = session.execute(text("SELECT 1"))
@@ -150,7 +158,7 @@ class TestDatabaseIntegration:
         # Create a test session
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Start a transaction
             session.begin()
@@ -174,7 +182,7 @@ class TestDatabaseIntegration:
         # Create a test session
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Execute a query
             result = session.execute(text("SELECT 1"))
@@ -185,6 +193,7 @@ class TestDatabaseIntegration:
             # No assertion about closed state; just ensure no error is raised
         finally:
             Base.metadata.drop_all(bind=test_engine)
+
 
 class TestDatabaseErrorHandling:
     """Test database error handling scenarios."""
@@ -240,6 +249,7 @@ class TestDatabaseErrorHandling:
             assert "Init error" in str(exc_info.value)
             # Verify drop_db was called before init_db failed
             mock_drop_db.assert_called_once()
+
 
 class TestDatabaseConfiguration:
     """Test database configuration settings."""

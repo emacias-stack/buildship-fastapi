@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 
 from app.database import Base
 
+
 class User(Base):
     """User model for authentication and user management."""
 
@@ -25,6 +26,7 @@ class User(Base):
 
     # Relationships
     items = relationship("Item", back_populates="owner")
+
 
 class Item(Base):
     """Item model for the main business logic."""

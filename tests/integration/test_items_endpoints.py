@@ -2,7 +2,6 @@
 Integration tests for items endpoints.
 """
 
-import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -20,7 +19,11 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=test_engine)
+
 
 def override_get_db():
     """Override database dependency for testing."""
@@ -30,11 +33,13 @@ def override_get_db():
     finally:
         db.close()
 
+
 # Override the database dependency
 app.dependency_overrides[get_db] = override_get_db
 
 # Create test client
 client = TestClient(app)
+
 
 class TestItemsEndpoints:
     """Test items endpoints integration."""
@@ -85,7 +90,10 @@ class TestItemsEndpoints:
             "price": 100,
         }
 
-        response = client.post("/api/v1/items/", json=item_data, headers=headers)
+        response = client.post(
+            "/api/v1/items/",
+            json=item_data,
+            headers=headers)
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
@@ -116,7 +124,10 @@ class TestItemsEndpoints:
             "price": -10,  # Negative price
         }
 
-        response = client.post("/api/v1/items/", json=item_data, headers=headers)
+        response = client.post(
+            "/api/v1/items/",
+            json=item_data,
+            headers=headers)
 
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -240,7 +251,10 @@ class TestItemsEndpoints:
 
         update_data = {"title": "Updated Title"}
 
-        response = client.put("/api/v1/items/999", json=update_data, headers=headers)
+        response = client.put(
+            "/api/v1/items/999",
+            json=update_data,
+            headers=headers)
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -269,12 +283,16 @@ class TestItemsEndpoints:
         session.refresh(test_item)
         session.close()
 
-        response = client.delete(f"/api/v1/items/{test_item.id}", headers=headers)
+        response = client.delete(
+            f"/api/v1/items/{test_item.id}",
+            headers=headers)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify item is deleted
-        get_response = client.get(f"/api/v1/items/{test_item.id}", headers=headers)
+        get_response = client.get(
+            f"/api/v1/items/{test_item.id}",
+            headers=headers)
         assert get_response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_delete_item_not_found(self):

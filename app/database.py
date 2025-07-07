@@ -26,6 +26,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create base class for models
 Base = declarative_base()
 
+
 def get_db():
     """Dependency to get database session."""
     db = SessionLocal()
@@ -33,6 +34,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def init_db():
     """Initialize database tables."""
@@ -42,9 +44,11 @@ def init_db():
     # Create all tables
     Base.metadata.create_all(bind=engine)
 
+
 def drop_db():
     """Drop all database tables."""
     Base.metadata.drop_all(bind=engine)
+
 
 def reset_db():
     """Reset database by dropping and recreating all tables."""

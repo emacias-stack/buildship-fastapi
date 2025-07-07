@@ -22,7 +22,8 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer() if settings.log_format == "json" else structlog.dev.ConsoleRenderer(),
+        structlog.processors.JSONRenderer()
+        if settings.log_format == "json" else structlog.dev.ConsoleRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -31,6 +32,7 @@ structlog.configure(
 )
 
 logger = structlog.get_logger()
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for structured request/response logging."""
@@ -67,6 +69,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware for adding security headers."""
 
@@ -78,9 +81,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = \
+            "max-age=31536000; includeSubDomains"
 
         return response
+
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Middleware for API key authentication with Swagger exclusion."""
@@ -123,7 +128,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """Check if API key validation should be skipped."""
 
         # Skip for configured exclude paths
-        if any(request.url.path.startswith(path) for path in self.exclude_paths):
+        if any(request.url.path.startswith(path)
+               for path in self.exclude_paths):
             return True
 
         # Skip for Swagger UI requests (check User-Agent)
@@ -149,7 +155,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return True
 
         # Skip for localhost requests
-        if request.client and request.client.host in ["127.0.0.1", "localhost", "::1"]:
+        if request.client and request.client.host in [
+                "127.0.0.1", "localhost", "::1"]:
             return True
 
         return False
@@ -158,6 +165,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """Validate the API key."""
         # Check against configured API keys
         return api_key in self.settings.api_keys
+
 
 def setup_middleware(app):
     """Setup all middleware for the application."""

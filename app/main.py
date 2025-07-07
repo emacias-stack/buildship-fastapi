@@ -18,6 +18,7 @@ from app.auth import get_current_active_user_optional
 from app.crud import get_items, get_items_count
 from app.models import User
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan events for the FastAPI application."""
@@ -30,7 +31,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="A production-ready FastAPI application with comprehensive testing and monitoring",
+    description="A production-ready FastAPI application with comprehensive \
+                testing and monitoring",
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan,
@@ -58,6 +60,7 @@ setup_middleware(app)
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(items.router, prefix="/api/v1/items", tags=["items"])
 
+
 @app.get("/", tags=["public"])
 async def root():
     """Root endpoint."""
@@ -66,6 +69,7 @@ async def root():
         "version": settings.app_version,
         "docs": "/docs" if settings.debug else None,
     }
+
 
 @app.get("/health", response_model=HealthCheck, tags=["public"])
 async def health_check(db: Session = Depends(get_db)):
@@ -90,6 +94,7 @@ async def health_check(db: Session = Depends(get_db)):
         database=db_status,
     )
 
+
 @app.get("/metrics", tags=["public"])
 async def metrics():
     """Prometheus metrics endpoint."""
@@ -100,6 +105,7 @@ async def metrics():
         "uptime": "running",
         "database_connections": "active",
     }
+
 
 @app.get("/public/items", response_model=PaginatedResponse, tags=["public"])
 async def read_public_items(

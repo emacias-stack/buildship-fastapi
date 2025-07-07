@@ -2,7 +2,6 @@
 Unit tests for CRUD operations.
 """
 
-import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -21,7 +20,11 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=test_engine)
+
 
 class TestUserCRUD:
     """Test user CRUD operations."""
@@ -31,7 +34,7 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user_data = UserCreate(
                 email="test@example.com",
@@ -39,7 +42,7 @@ class TestUserCRUD:
                 password="testpassword",
                 full_name="Test User",
             )
-            
+
             user = create_user(session, user_data)
             assert user is not None
             assert user.email == "test@example.com"
@@ -55,7 +58,7 @@ class TestUserCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -68,7 +71,7 @@ class TestUserCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Test getting user by ID
             user = get_user_by_id(session, test_user.id)
             assert user is not None
@@ -82,7 +85,7 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_user_by_id(session, 999)
             assert user is None
@@ -95,7 +98,7 @@ class TestUserCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -108,7 +111,7 @@ class TestUserCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Test getting user by email
             user = get_user_by_email(session, "test@example.com")
             assert user is not None
@@ -122,7 +125,7 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_user_by_email(session, "nonexistent@example.com")
             assert user is None
@@ -135,7 +138,7 @@ class TestUserCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -148,7 +151,7 @@ class TestUserCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Test getting user by username
             user = get_user_by_username(session, "testuser")
             assert user is not None
@@ -162,7 +165,7 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_user_by_username(session, "nonexistent")
             assert user is None
@@ -175,7 +178,7 @@ class TestUserCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -188,13 +191,13 @@ class TestUserCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Update user data
             update_data = UserUpdate(
                 full_name="Updated Test User",
                 is_active=False,
             )
-            
+
             updated_user = update_user(session, test_user.id, update_data)
             assert updated_user is not None
             assert updated_user.full_name == "Updated Test User"
@@ -208,7 +211,7 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             update_data = UserUpdate(full_name="Updated Test User")
             updated_user = update_user(session, 999, update_data)
@@ -222,7 +225,7 @@ class TestUserCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -235,11 +238,11 @@ class TestUserCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Delete user
             success = delete_user(session, test_user.id)
             assert success is True
-            
+
             # Verify user is deleted
             user = get_user_by_id(session, test_user.id)
             assert user is None
@@ -252,13 +255,14 @@ class TestUserCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             success = delete_user(session, 999)
             assert success is False
         finally:
             session.close()
             Base.metadata.drop_all(bind=test_engine)
+
 
 class TestItemCRUD:
     """Test item CRUD operations."""
@@ -268,7 +272,7 @@ class TestItemCRUD:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -281,14 +285,14 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create item data
             item_data = ItemCreate(
                 title="Test Item",
                 description="Test Description",
                 price=100,
             )
-            
+
             item = create_item(session, item_data, test_user.id)
             assert item is not None
             assert item.title == "Test Item"
@@ -304,7 +308,7 @@ class TestItemCRUD:
         # Create test database, user, and item
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -317,7 +321,7 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create a test item
             test_item = Item(
                 title="Test Item",
@@ -328,7 +332,7 @@ class TestItemCRUD:
             session.add(test_item)
             session.commit()
             session.refresh(test_item)
-            
+
             # Test getting item by ID
             item = get_item_by_id(session, test_item.id)
             assert item is not None
@@ -342,7 +346,6 @@ class TestItemCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
         try:
             item = get_item_by_id(session, 999)
             assert item is None
@@ -355,7 +358,6 @@ class TestItemCRUD:
         # Create test database, user, and item
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
         try:
             # Create a test user
             test_user = User(
@@ -368,7 +370,6 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
             # Create a test item
             test_item = Item(
                 title="Test Item",
@@ -379,13 +380,13 @@ class TestItemCRUD:
             session.add(test_item)
             session.commit()
             session.refresh(test_item)
-            
+
             # Update item data
             update_data = ItemUpdate(
                 title="Updated Test Item",
                 price=200,
             )
-            
+
             updated_item = update_item(session, test_item.id, update_data)
             assert updated_item is not None
             assert updated_item.title == "Updated Test Item"
@@ -399,7 +400,7 @@ class TestItemCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             update_data = ItemUpdate(title="Updated Test Item")
             updated_item = update_item(session, 999, update_data)
@@ -413,7 +414,7 @@ class TestItemCRUD:
         # Create test database, user, and item
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -426,7 +427,7 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create a test item
             test_item = Item(
                 title="Test Item",
@@ -437,11 +438,11 @@ class TestItemCRUD:
             session.add(test_item)
             session.commit()
             session.refresh(test_item)
-            
+
             # Delete item
             success = delete_item(session, test_item.id)
             assert success is True
-            
+
             # Verify item is deleted
             item = get_item_by_id(session, test_item.id)
             assert item is None
@@ -454,7 +455,7 @@ class TestItemCRUD:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             success = delete_item(session, 999)
             assert success is False
@@ -467,7 +468,7 @@ class TestItemCRUD:
         # Create test database, user, and items
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -480,13 +481,21 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create test items
-            item1 = Item(title="Item 1", description="Description 1", price=100, owner_id=test_user.id)
-            item2 = Item(title="Item 2", description="Description 2", price=200, owner_id=test_user.id)
+            item1 = Item(
+                title="Item 1",
+                description="Description 1",
+                price=100,
+                owner_id=test_user.id)
+            item2 = Item(
+                title="Item 2",
+                description="Description 2",
+                price=200,
+                owner_id=test_user.id)
             session.add_all([item1, item2])
             session.commit()
-            
+
             # Test getting all items
             items = get_items(session)
             assert len(items) == 2
@@ -501,7 +510,7 @@ class TestItemCRUD:
         # Create test database, users, and items
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create test users
             user1 = User(
@@ -522,13 +531,15 @@ class TestItemCRUD:
             session.commit()
             session.refresh(user1)
             session.refresh(user2)
-            
+
             # Create test items
-            item1 = Item(title="User1 Item", description="Description", price=100, owner_id=user1.id)
-            item2 = Item(title="User2 Item", description="Description", price=200, owner_id=user2.id)
+            item1 = Item(title="User1 Item", description="Description",
+                         price=100, owner_id=user1.id)
+            item2 = Item(title="User2 Item", description="Description",
+                         price=200, owner_id=user2.id)
             session.add_all([item1, item2])
             session.commit()
-            
+
             # Test getting items by owner
             user1_items = get_items(session, owner_id=user1.id)
             assert len(user1_items) == 1
@@ -542,7 +553,6 @@ class TestItemCRUD:
         # Create test database, user, and items
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
         try:
             # Create a test user
             test_user = User(
@@ -555,13 +565,21 @@ class TestItemCRUD:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create test items
-            item1 = Item(title="Item 1", description="Description 1", price=100, owner_id=test_user.id)
-            item2 = Item(title="Item 2", description="Description 2", price=200, owner_id=test_user.id)
+            item1 = Item(
+                title="Item 1",
+                description="Description 1",
+                price=100,
+                owner_id=test_user.id)
+            item2 = Item(
+                title="Item 2",
+                description="Description 2",
+                price=200,
+                owner_id=test_user.id)
             session.add_all([item1, item2])
             session.commit()
-            
+
             # Test getting items count
             count = get_items_count(session)
             assert count == 2

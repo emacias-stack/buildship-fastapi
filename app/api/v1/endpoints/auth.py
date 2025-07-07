@@ -16,7 +16,9 @@ from app.schemas import Token, UserCreate, User as UserSchema
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+
+@router.post("/register", response_model=UserSchema,
+             status_code=status.HTTP_201_CREATED)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
     # Check if user with email already exists
@@ -38,10 +40,11 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     # Create new user
     return create_user(db=db, user=user)
 
+
 @router.post("/token", response_model=Token)
 async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-):
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: Session = Depends(get_db)):
     """Login to get access token."""
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -51,12 +54,14 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token_expires = timedelta(
+        minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.get("/me", response_model=UserSchema)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):

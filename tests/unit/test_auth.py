@@ -6,7 +6,7 @@ import pytest
 from datetime import timedelta
 from jose import jwt
 from fastapi import HTTPException, status
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -33,7 +33,11 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+TestSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=test_engine)
+
 
 class TestPasswordHashing:
     """Test password hashing functionality."""
@@ -57,6 +61,7 @@ class TestPasswordHashing:
 
         assert hash1 != hash2
 
+
 class TestTokenCreation:
     """Test JWT token creation and verification."""
 
@@ -75,7 +80,9 @@ class TestTokenCreation:
         token = create_access_token(data, expires_delta=expires_delta)
 
         # Decode token to verify expiry
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(
+            token, settings.secret_key, algorithms=[
+                settings.algorithm])
         assert payload["sub"] == "testuser"
 
     def test_verify_token_valid(self):
@@ -113,6 +120,7 @@ class TestTokenCreation:
 
         assert username is None
 
+
 class TestUserAuthentication:
     """Test user authentication functionality."""
 
@@ -121,7 +129,7 @@ class TestUserAuthentication:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -134,7 +142,7 @@ class TestUserAuthentication:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Test authentication
             user = authenticate_user(session, "testuser", "testpassword")
             assert user is not None
@@ -148,7 +156,7 @@ class TestUserAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = authenticate_user(session, "nonexistent", "password")
             assert user is None
@@ -161,7 +169,7 @@ class TestUserAuthentication:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -173,7 +181,7 @@ class TestUserAuthentication:
             )
             session.add(test_user)
             session.commit()
-            
+
             # Test authentication with wrong password
             user = authenticate_user(session, "testuser", "wrongpassword")
             assert user is None
@@ -186,7 +194,7 @@ class TestUserAuthentication:
         # Create test database and inactive user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create an inactive user
             inactive_user = User(
@@ -198,14 +206,16 @@ class TestUserAuthentication:
             )
             session.add(inactive_user)
             session.commit()
-            
-            # Test authentication - the function doesn't check is_active, so it should return the user
+
+            # Test authentication - the function doesn't check is_active, so it
+            # should return the user
             user = authenticate_user(session, "inactive", "password")
             assert user is not None
             assert not user.is_active
         finally:
             session.close()
             Base.metadata.drop_all(bind=test_engine)
+
 
 class TestUserFunctions:
     """Test user-related functions."""
@@ -215,7 +225,7 @@ class TestUserFunctions:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -228,7 +238,7 @@ class TestUserFunctions:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Test getting user by username (not id)
             user = get_user(session, "testuser")
             assert user is not None
@@ -242,13 +252,14 @@ class TestUserFunctions:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_user(session, 999)
             assert user is None
         finally:
             session.close()
             Base.metadata.drop_all(bind=test_engine)
+
 
 class TestCurrentUserDependencies:
     """Test current user dependency functions."""
@@ -259,7 +270,7 @@ class TestCurrentUserDependencies:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -272,7 +283,7 @@ class TestCurrentUserDependencies:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create valid token
             token = create_access_token({"sub": test_user.username})
 
@@ -292,7 +303,7 @@ class TestCurrentUserDependencies:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_user(token=None, db=session)
@@ -308,7 +319,7 @@ class TestCurrentUserDependencies:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_user(token="invalid_token", db=session)
@@ -324,7 +335,7 @@ class TestCurrentUserDependencies:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create token for non-existent user
             token = create_access_token({"sub": "nonexistent"})
@@ -343,7 +354,7 @@ class TestCurrentUserDependencies:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -356,7 +367,7 @@ class TestCurrentUserDependencies:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Mock get_current_user to return active user
             with patch('app.auth.get_current_user', return_value=test_user):
                 user = await get_current_active_user(current_user=test_user)
@@ -372,7 +383,7 @@ class TestCurrentUserDependencies:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create inactive user
             inactive_user = User(
@@ -397,7 +408,7 @@ class TestCurrentUserDependencies:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create superuser
             superuser = User(
@@ -421,7 +432,7 @@ class TestCurrentUserDependencies:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a regular user
             test_user = User(
@@ -434,7 +445,7 @@ class TestCurrentUserDependencies:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             with pytest.raises(HTTPException) as exc_info:
                 await get_current_superuser(current_user=test_user)
 
@@ -444,6 +455,7 @@ class TestCurrentUserDependencies:
             session.close()
             Base.metadata.drop_all(bind=test_engine)
 
+
 class TestOptionalAuthentication:
     """Test optional authentication functions."""
 
@@ -452,7 +464,7 @@ class TestOptionalAuthentication:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -465,7 +477,7 @@ class TestOptionalAuthentication:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             # Create valid token
             token = create_access_token({"sub": test_user.username})
 
@@ -484,7 +496,7 @@ class TestOptionalAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_current_user_optional(token="invalid_token", db=session)
             assert user is None
@@ -497,7 +509,7 @@ class TestOptionalAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_current_user_optional(token="credentials", db=session)
             assert user is None
@@ -510,7 +522,7 @@ class TestOptionalAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_current_user_optional(token=None, db=session)
             assert user is None
@@ -523,7 +535,7 @@ class TestOptionalAuthentication:
         # Create test database and user
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create a test user
             test_user = User(
@@ -536,7 +548,7 @@ class TestOptionalAuthentication:
             session.add(test_user)
             session.commit()
             session.refresh(test_user)
-            
+
             user = get_current_active_user_optional(current_user=test_user)
             assert user is not None
             assert user.is_active
@@ -549,7 +561,7 @@ class TestOptionalAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             # Create inactive user
             inactive_user = User(
@@ -570,7 +582,7 @@ class TestOptionalAuthentication:
         # Create test database
         Base.metadata.create_all(bind=test_engine)
         session = TestSessionLocal()
-        
+
         try:
             user = get_current_active_user_optional(current_user=None)
             assert user is None

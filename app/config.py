@@ -6,6 +6,7 @@ from typing import Optional, List
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
@@ -51,7 +52,8 @@ class Settings(BaseSettings):
     # PostgreSQL settings (for docker-compose)
     postgres_db: Optional[str] = Field(default=None, env="POSTGRES_DB")
     postgres_user: Optional[str] = Field(default=None, env="POSTGRES_USER")
-    postgres_password: Optional[str] = Field(default=None, env="POSTGRES_PASSWORD")
+    postgres_password: Optional[str] = Field(
+        default=None, env="POSTGRES_PASSWORD")
 
     # API Key settings
     enable_api_key_auth: bool = Field(default=False, env="ENABLE_API_KEY_AUTH")
@@ -67,17 +69,25 @@ class Settings(BaseSettings):
         if self.api_keys_raw is None:
             return []
         if isinstance(self.api_keys_raw, str):
-            return [key.strip() for key in self.api_keys_raw.split(',') if key.strip()]
+            return [key.strip()
+                    for key in self.api_keys_raw.split(',') if key.strip()]
         elif isinstance(self.api_keys_raw, list):
             return self.api_keys_raw
         return []
 
     def exclude_api_key_paths(self) -> List[str]:
-        """Get exclude paths as a list, parsing from comma-separated string if needed."""
+        """Get exclude paths as list, parsing from comma-separated string if needed."""
         if self.exclude_api_key_paths_raw is None:
-            return ["/docs", "/redoc", "/openapi.json", "/health", "/metrics", "/"]
+            return [
+                "/docs",
+                "/redoc",
+                "/openapi.json",
+                "/health",
+                "/metrics",
+                "/"]
         if isinstance(self.exclude_api_key_paths_raw, str):
-            return [path.strip() for path in self.exclude_api_key_paths_raw.split(',') if path.strip()]
+            return [path.strip() for path in self.exclude_api_key_paths_raw.split(
+                ',') if path.strip()]
         elif isinstance(self.exclude_api_key_paths_raw, list):
             return self.exclude_api_key_paths_raw
         return ["/docs", "/redoc", "/openapi.json", "/health", "/metrics", "/"]
@@ -85,6 +95,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+
 
 # Global settings instance
 settings = Settings()

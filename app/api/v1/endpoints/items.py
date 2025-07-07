@@ -21,12 +21,20 @@ from app.schemas import Item, ItemCreate, ItemUpdate, PaginatedResponse
 
 router = APIRouter()
 
+
 @router.get("/", response_model=PaginatedResponse)
 async def read_items(
-    skip: int = Query(0, ge=0, description="Number of items to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of items to return"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+        skip: int = Query(
+            0,
+            ge=0,
+            description="Number of items to skip"),
+        limit: int = Query(
+            100,
+            ge=1,
+            le=1000,
+            description="Number of items to return"),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
 ):
     """Get paginated list of items."""
     items = get_items(db, skip=skip, limit=limit)
@@ -43,16 +51,25 @@ async def read_items(
         pages=pages,
     )
 
+
 @router.get("/my-items", response_model=List[Item])
 async def read_my_items(
-    skip: int = Query(0, ge=0, description="Number of items to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Number of items to return"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+        skip: int = Query(
+            0,
+            ge=0,
+            description="Number of items to skip"),
+        limit: int = Query(
+            100,
+            ge=1,
+            le=1000,
+            description="Number of items to return"),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
 ):
     """Get current user's items."""
     items = get_items(db, skip=skip, limit=limit, owner_id=current_user.id)
     return items
+
 
 @router.get("/{item_id}", response_model=Item)
 async def read_item(
@@ -69,6 +86,7 @@ async def read_item(
         )
     return item
 
+
 @router.post("/", response_model=Item, status_code=status.HTTP_201_CREATED)
 async def create_new_item(
     item: ItemCreate,
@@ -77,6 +95,7 @@ async def create_new_item(
 ):
     """Create a new item."""
     return create_item(db=db, item=item, owner_id=current_user.id)
+
 
 @router.put("/{item_id}", response_model=Item)
 async def update_existing_item(
@@ -102,6 +121,7 @@ async def update_existing_item(
 
     updated_item = update_item(db=db, item_id=item_id, item_update=item_update)
     return updated_item
+
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_existing_item(
