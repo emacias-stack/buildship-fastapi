@@ -2,7 +2,7 @@
 Items endpoints for CRUD operations.
 """
 
-from typing import List, Optional
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
@@ -21,7 +21,6 @@ from app.schemas import Item, ItemCreate, ItemUpdate, PaginatedResponse
 
 router = APIRouter()
 
-
 @router.get("/", response_model=PaginatedResponse)
 async def read_items(
     skip: int = Query(0, ge=0, description="Number of items to skip"),
@@ -32,10 +31,10 @@ async def read_items(
     """Get paginated list of items."""
     items = get_items(db, skip=skip, limit=limit)
     total = get_items_count(db)
-    
+
     pages = (total + limit - 1) // limit
     page = (skip // limit) + 1
-    
+
     return PaginatedResponse(
         items=items,
         total=total,
@@ -43,7 +42,6 @@ async def read_items(
         size=limit,
         pages=pages,
     )
-
 
 @router.get("/my-items", response_model=List[Item])
 async def read_my_items(
@@ -55,7 +53,6 @@ async def read_my_items(
     """Get current user's items."""
     items = get_items(db, skip=skip, limit=limit, owner_id=current_user.id)
     return items
-
 
 @router.get("/{item_id}", response_model=Item)
 async def read_item(
@@ -72,7 +69,6 @@ async def read_item(
         )
     return item
 
-
 @router.post("/", response_model=Item, status_code=status.HTTP_201_CREATED)
 async def create_new_item(
     item: ItemCreate,
@@ -81,7 +77,6 @@ async def create_new_item(
 ):
     """Create a new item."""
     return create_item(db=db, item=item, owner_id=current_user.id)
-
 
 @router.put("/{item_id}", response_model=Item)
 async def update_existing_item(
@@ -98,16 +93,15 @@ async def update_existing_item(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Item not found",
         )
-    
+
     if existing_item.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
-    
+
     updated_item = update_item(db=db, item_id=item_id, item_update=item_update)
     return updated_item
-
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_existing_item(
@@ -123,16 +117,16 @@ async def delete_existing_item(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Item not found",
         )
-    
+
     if existing_item.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
-    
+
     success = delete_item(db=db, item_id=item_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete item",
-        ) 
+        )

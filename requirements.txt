@@ -35,6 +35,9 @@ isort==5.12.0
 flake8==6.1.0
 mypy==1.7.1
 
+# Security scanning
+bandit==1.7.5
+
 # Production dependencies
 
 # Email validation for Pydantic

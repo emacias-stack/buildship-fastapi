@@ -32,13 +32,12 @@ structlog.configure(
 
 logger = structlog.get_logger()
 
-
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for structured request/response logging."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Log request
         logger.info(
             "Request started",
@@ -47,13 +46,13 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             client_ip=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
         )
-        
+
         # Process request
         response = await call_next(request)
-        
+
         # Calculate processing time
         process_time = time.time() - start_time
-        
+
         # Log response
         logger.info(
             "Request completed",
@@ -62,47 +61,45 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             status_code=response.status_code,
             process_time=process_time,
         )
-        
+
         # Add processing time to response headers
         response.headers["X-Process-Time"] = str(process_time)
-        
-        return response
 
+        return response
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware for adding security headers."""
-    
+
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        
+
         # Add security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        
-        return response
 
+        return response
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Middleware for API key authentication with Swagger exclusion."""
-    
+
     def __init__(self, app, settings):
         super().__init__(app)
         self.settings = settings
         self.api_key_header = settings.api_key_header
         self.exclude_paths = settings.exclude_api_key_paths
-    
+
     async def dispatch(self, request: Request, call_next):
         # Skip API key check if not enabled
         if not self.settings.enable_api_key_auth:
             return await call_next(request)
-        
+
         # Skip API key check for Swagger/OpenAPI requests
         if self._should_skip_api_key_check(request):
             return await call_next(request)
-        
+
         # Check for API key
         api_key = request.headers.get(self.api_key_header)
         if not api_key:
@@ -111,7 +108,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 content="API key required",
                 headers={"WWW-Authenticate": "ApiKey"}
             )
-        
+
         # Validate API key
         if not self._validate_api_key(api_key):
             return Response(
@@ -119,16 +116,16 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 content="Invalid API key",
                 headers={"WWW-Authenticate": "ApiKey"}
             )
-        
+
         return await call_next(request)
-    
+
     def _should_skip_api_key_check(self, request: Request) -> bool:
         """Check if API key validation should be skipped."""
-        
+
         # Skip for configured exclude paths
         if any(request.url.path.startswith(path) for path in self.exclude_paths):
             return True
-        
+
         # Skip for Swagger UI requests (check User-Agent)
         user_agent = request.headers.get("user-agent", "").lower()
         swagger_user_agents = [
@@ -138,34 +135,33 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             "fastapi",
             "mozilla/5.0"  # Browser requests
         ]
-        
+
         if any(agent in user_agent for agent in swagger_user_agents):
             return True
-        
+
         # Skip for requests coming from Swagger UI (check Referer)
         referer = request.headers.get("referer", "").lower()
         if "docs" in referer or "swagger" in referer:
             return True
-        
+
         # Skip for development environment
         if self.settings.debug:
             return True
-        
+
         # Skip for localhost requests
         if request.client and request.client.host in ["127.0.0.1", "localhost", "::1"]:
             return True
-        
+
         return False
-    
+
     def _validate_api_key(self, api_key: str) -> bool:
         """Validate the API key."""
         # Check against configured API keys
         return api_key in self.settings.api_keys
 
-
 def setup_middleware(app):
     """Setup all middleware for the application."""
-    
+
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -174,16 +170,16 @@ def setup_middleware(app):
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Add trusted host middleware
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=["*"],  # Configure appropriately for production
     )
-    
+
     # Add custom middleware
     app.add_middleware(LoggingMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
-    
+
     # Add API key middleware (conditional)
-    app.add_middleware(APIKeyMiddleware, settings=settings) 
+    app.add_middleware(APIKeyMiddleware, settings=settings)

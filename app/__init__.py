@@ -6,4 +6,4 @@ monitoring, and deployment capabilities.
 """
 
 __version__ = "1.0.0"
-__author__ = "Erick Macias" 
+__author__ = "Erick Macias"

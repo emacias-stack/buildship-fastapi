@@ -178,57 +178,68 @@ docker run -i grafana/k6 run - <k6/performance-tests.js
 
 ## Testing
 
-### Unit Tests
+The project includes comprehensive testing with multiple test types and performance testing capabilities.
 
-Test individual components and functions:
+### Test Commands
 
-```bash
-make test-unit
-```
-
-### Integration Tests
-
-Test API endpoints and database interactions:
-
-```bash
-make test-integration
-```
-
-### All Tests
-
-Run the complete test suite:
-
+#### All Tests
+Run the complete test suite (unit + integration):
 ```bash
 make test
 ```
 
-### Performance Tests
-
-#### Load Testing
+#### Unit Tests Only
+Test individual components and functions:
 ```bash
-make perf-test
+make run-tests
 ```
 
-#### Stress Testing
+#### Integration Tests Only
+Test API endpoints and database interactions:
 ```bash
-make perf-stress
+make run-integration-tests
 ```
 
-#### Spike Testing
+#### Tests with Coverage
+Run tests with detailed coverage reporting:
 ```bash
-make perf-spike
+make test-coverage
 ```
 
-#### Environment-specific Performance Tests
+### Performance Testing with k6
+
+#### Quick Performance Test
+Run a 1-minute performance test (recommended for development):
 ```bash
-make perf-test-dev      # Development
-make perf-test-staging  # Staging
-make perf-test-prod     # Production
+make run-quick-test
+```
+
+#### Full Performance Test Suite
+Run all performance tests (load, stress, and spike tests):
+```bash
+make run-performance-tests
+```
+
+#### Individual Performance Tests
+```bash
+# Load test (gradual load increase)
+k6 run k6/performance-tests.js
+
+# Stress test (high load to find breaking points)
+k6 run k6/stress-test.js
+
+# Spike test (sudden traffic spikes)
+k6 run k6/spike-test.js
 ```
 
 ### Test Coverage
 
 Tests generate coverage reports in HTML format. Open `htmlcov/index.html` to view detailed coverage information.
+
+**Coverage Requirements:**
+- Minimum coverage: 90%
+- Coverage reports are generated in both terminal and HTML formats
+- Failed tests will prevent deployment if coverage is below threshold
 
 ## API Documentation
 
@@ -278,6 +289,13 @@ The API uses JWT authentication. To access protected endpoints:
 
 ## Database Management
 
+### Start Database Services
+
+Start PostgreSQL and Redis databases:
+```bash
+make db-start
+```
+
 ### Initialize Database Tables
 
 Create all database tables:
@@ -290,13 +308,6 @@ make db-init
 Drop and recreate all tables:
 ```bash
 make db-reset
-```
-
-### Drop Database Tables
-
-Remove all tables:
-```bash
-make db-drop
 ```
 
 ### Database Schema
@@ -313,18 +324,81 @@ Tables are created automatically when the application starts or when running `ma
 ### Development
 
 ```bash
-make docker-build    # Build image
-make docker-run      # Start services
-make docker-stop     # Stop services
-make docker-logs     # View logs
+make docker-build    # Build Docker image locally with version
+make docker-run      # Run application in Docker
+make docker-stop     # Stop all Docker containers
+make docker-logs     # View Docker logs
 ```
 
 ### Production
 
 ```bash
-make docker-prod-build    # Build production image
+make docker-prod-build    # Build production Docker image
 make docker-prod-run      # Start production services
 make docker-prod-stop     # Stop production services
+make docker-deploy        # Deploy to production using docker-compose.prod.yml
+```
+
+### Registry Operations
+
+```bash
+make docker-push      # Build and push Docker image to registry with version
+```
+
+## CI/CD Pipeline
+
+The project includes comprehensive CI/CD pipelines that automatically run on every push and pull request.
+
+### Automated Testing Pipeline
+
+The CI/CD pipeline includes the following checks:
+
+#### 🧪 **Test Pipeline** (`.github/workflows/test-pipeline.yml`)
+- **Unit & Integration Tests**: Runs all pytest tests with coverage
+- **Code Quality**: Linting (flake8), type checking (mypy), formatting (black/isort)
+- **Performance Tests**: k6 load testing with quick performance validation
+- **Security Scan**: Bandit security vulnerability scanning
+- **Docker Build Test**: Ensures Docker image builds and runs correctly
+
+#### ⚡ **Pull Request Checks** (`.github/workflows/pr-checks.yml`)
+- **Quick Tests**: Fast validation for pull requests
+- **Quick Performance**: 1-minute performance test
+- **Code Quality**: Essential linting and formatting checks
+
+### Pipeline Triggers
+
+- **Push to main/develop**: Full test pipeline
+- **Pull Request**: Quick checks for faster feedback
+- **Daily Schedule**: Automated testing at 2 AM UTC
+- **Tags**: Docker image building and deployment
+
+### Pipeline Features
+
+- ✅ **Parallel Execution**: Tests run in parallel for faster feedback
+- ✅ **Caching**: Dependencies are cached to speed up builds
+- ✅ **Database Services**: PostgreSQL and Redis services for testing
+- ✅ **Coverage Reports**: Detailed coverage analysis with 90% minimum requirement
+- ✅ **Artifact Upload**: Test results and reports are saved as artifacts
+- ✅ **Security Scanning**: Automated security vulnerability detection
+- ✅ **Performance Monitoring**: k6 performance tests ensure no regressions
+
+### Local Pipeline Testing
+
+You can run the same checks locally using the Makefile:
+
+```bash
+# Run all tests (same as CI)
+make test
+
+# Run with coverage
+make test-coverage
+
+# Run code quality checks
+make lint
+make format
+
+# Run performance tests
+make run-quick-test
 ```
 
 ## Deployment
@@ -365,55 +439,134 @@ LOG_FORMAT=json
 
 ## Development Commands
 
+### Setup & Installation
 ```bash
 make help              # Show all available commands
-make setup-dev         # Setup development environment
-make install           # Install dependencies in virtual environment
-make test              # Run all tests
-make lint              # Run linting
-make format            # Format code
-make clean             # Clean cache files and virtual environment
-make dev               # Start development server
-make prod              # Start production server
+make setup             # Complete project setup (creates venv, installs deps, starts DB, runs tests)
+make install-deps      # Install Python dependencies in virtual environment
+make version           # Show current version information
+```
+
+### Database Management
+```bash
+make db-start          # Start PostgreSQL and Redis databases
+make db-init           # Initialize database tables (requires DB to be running)
+make db-reset          # Reset database (drop and recreate tables)
+```
+
+### Testing
+```bash
+make test              # Run all tests (unit + integration)
+make test-coverage     # Run tests with coverage report
+make run-tests         # Run unit tests only
+make run-integration-tests  # Run integration tests only
+make run-performance-tests  # Run k6 performance tests
+make run-quick-test    # Run quick performance test (1 minute)
+```
+
+### Code Quality
+```bash
+make lint              # Run linting checks (flake8 + mypy)
+make format            # Format code with black and isort
+```
+
+### Development Server
+```bash
+make dev               # Start development server with hot reload
 make health            # Health check
+```
+
+### Docker Commands
+```bash
+make docker-build      # Build Docker image locally with version
+make docker-push       # Build and push Docker image to registry with version
+make docker-run        # Run application in Docker
+make docker-deploy     # Deploy to production using docker-compose.prod.yml
+make docker-stop       # Stop all Docker containers
+make docker-logs       # View Docker logs
+```
+
+### Production Commands
+```bash
+make docker-prod-build # Build production Docker image
+make docker-prod-run   # Start production services
+make docker-prod-stop  # Stop production services
+make setup-prod        # Complete production environment setup
+```
+
+### Cleaning
+```bash
+make clean             # Clean up generated files and virtual environment
+```
+
+### CI/CD Commands
+```bash
+make ci-test           # Run tests for CI/CD with coverage and XML reports
+make ci-lint           # Run linting checks for CI/CD
+make ci-format-check   # Check code formatting for CI/CD
+make test-all          # Run all tests including performance tests
 ```
 
 ## Performance Testing with k6
 
 ### Test Scenarios
 
-1. **Performance Test**: Gradual load increase to test normal performance
-2. **Stress Test**: High load to find breaking points
-3. **Spike Test**: Sudden traffic spikes to test resilience
+The project includes three types of performance tests:
 
-### Running Tests
+1. **Load Test** (`performance-tests.js`): Gradual load increase to test normal performance
+2. **Stress Test** (`stress-test.js`): High load to find breaking points and system limits
+3. **Spike Test** (`spike-test.js`): Sudden traffic spikes to test system resilience
 
+### Running Performance Tests
+
+#### Quick Test (Recommended for Development)
 ```bash
-# Quick test (1 minute, recommended for development)
 make run-quick-test
+```
+- Duration: 1 minute
+- Perfect for development and CI/CD pipelines
+- Tests basic functionality under load
 
-# Basic performance test (5 minutes)
+#### Full Performance Test Suite
+```bash
+make run-performance-tests
+```
+- Runs all three test scenarios sequentially
+- Comprehensive performance validation
+- Use before major deployments
+
+#### Individual Tests
+```bash
+# Load test (gradual load increase)
 k6 run k6/performance-tests.js
 
-# Stress test (14 minutes)
+# Stress test (high load to find breaking points)
 k6 run k6/stress-test.js
 
-# Spike test (5 minutes)
+# Spike test (sudden traffic spikes)
 k6 run k6/spike-test.js
 
 # With custom base URL
 k6 run --env BASE_URL=https://api.example.com k6/performance-tests.js
 ```
 
-**Note:** The full performance test suite takes ~24 minutes. Use `make run-quick-test` for faster feedback during development.
+### Performance Test Configuration
+
+All performance tests are configured in `k6/k6.config.js` and can be customized for different environments:
+
+- **Development**: Lower load, shorter duration
+- **Staging**: Medium load, realistic scenarios
+- **Production**: High load, extended duration
 
 ### Test Results
 
-k6 provides detailed metrics including:
-- Request duration percentiles
-- Error rates
-- Throughput
-- Custom metrics
+Performance test results include:
+- **Response times** (min, max, average, p95, p99)
+- **Throughput** (requests per second)
+- **Error rates** and failure analysis
+- **Resource utilization** metrics
+
+**Note:** The full performance test suite takes ~24 minutes. Use `make run-quick-test` for faster feedback during development.
 
 ## Monitoring and Health Checks
 
