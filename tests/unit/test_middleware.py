@@ -155,4 +155,4 @@ class TestSetupMiddleware:
         app = FastAPI()
         setup_middleware(app)
         # Check that all middleware classes are present
-        middleware_classes = [mw.cls for mw in app.user_middleware]
+        assert len(app.user_middleware) > 0

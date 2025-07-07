@@ -2,7 +2,7 @@
 CRUD operations for database interactions.
 """
 
-from typing import List, Optional
+from typing import List, Optional, cast
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -101,7 +101,8 @@ def get_items_count(db: Session, owner_id: Optional[int] = None) -> int:
     query = db.query(func.count(Item.id))
     if owner_id is not None:
         query = query.filter(Item.owner_id == owner_id)
-    return query.scalar()
+    result = cast(int, query.scalar())
+    return result if result is not None else 0
 
 
 def create_item(db: Session, item: ItemCreate, owner_id: int) -> Item:

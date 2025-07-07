@@ -4,14 +4,20 @@ Custom middleware for the FastAPI application.
 
 import time
 import structlog
+from typing import Any, Callable, cast
 from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.applications import Starlette
 
 from app.config import settings
 
 # Configure structured logging
+# Choose the appropriate renderer based on settings
+renderer = (structlog.processors.JSONRenderer()
+            if settings.log_format == "json" else structlog.dev.ConsoleRenderer())
+
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
@@ -22,8 +28,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
-        if settings.log_format == "json" else structlog.dev.ConsoleRenderer(),
+        cast(Any, renderer),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -37,7 +42,7 @@ logger = structlog.get_logger()
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for structured request/response logging."""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
 
         # Log request
@@ -50,7 +55,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         )
 
         # Process request
-        response = await call_next(request)
+        response = cast(Response, await call_next(request))
 
         # Calculate processing time
         process_time = time.time() - start_time
@@ -73,8 +78,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware for adding security headers."""
 
-    async def dispatch(self, request: Request, call_next):
-        response = await call_next(request)
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        response = cast(Response, await call_next(request))
 
         # Add security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -90,20 +95,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Middleware for API key authentication with Swagger exclusion."""
 
-    def __init__(self, app, settings):
+    def __init__(self, app: Starlette, settings: Any) -> None:
         super().__init__(app)
         self.settings = settings
         self.api_key_header = settings.api_key_header
         self.exclude_paths = settings.exclude_api_key_paths
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Skip API key check if not enabled
         if not self.settings.enable_api_key_auth:
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Skip API key check for Swagger/OpenAPI requests
         if self._should_skip_api_key_check(request):
-            return await call_next(request)
+            return cast(Response, await call_next(request))
 
         # Check for API key
         api_key = request.headers.get(self.api_key_header)
@@ -122,7 +127,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                 headers={"WWW-Authenticate": "ApiKey"}
             )
 
-        return await call_next(request)
+        return cast(Response, await call_next(request))
 
     def _should_skip_api_key_check(self, request: Request) -> bool:
         """Check if API key validation should be skipped."""
@@ -167,7 +172,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         return api_key in self.settings.api_keys
 
 
-def setup_middleware(app):
+def setup_middleware(app: Starlette) -> None:
     """Setup all middleware for the application."""
 
     # Add CORS middleware

@@ -49,8 +49,8 @@ class TestDatabaseSession:
             # Get the generator
             db_gen = get_db()
 
-            # Get the session
-            session = next(db_gen)
+            # Get the session (we don't need to store it, just consume the generator)
+            next(db_gen)
 
             # Simulate the finally block
             try:

@@ -2,9 +2,10 @@
 Database configuration and session management.
 """
 
+from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
 
 from app.config import settings
@@ -27,7 +28,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     """Dependency to get database session."""
     db = SessionLocal()
     try:
@@ -36,7 +37,7 @@ def get_db():
         db.close()
 
 
-def init_db():
+def init_db() -> None:
     """Initialize database tables."""
     # Import all models to ensure they are registered with Base
     from app.models import User, Item  # noqa: F401
@@ -45,12 +46,12 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
-def drop_db():
+def drop_db() -> None:
     """Drop all database tables."""
     Base.metadata.drop_all(bind=engine)
 
 
-def reset_db():
+def reset_db() -> None:
     """Reset database by dropping and recreating all tables."""
     drop_db()
     init_db()
