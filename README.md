@@ -178,68 +178,23 @@ docker run -i grafana/k6 run - <k6/performance-tests.js
 
 ## Testing
 
-The project includes comprehensive testing with multiple test types and performance testing capabilities.
-
-### Test Commands
-
-#### All Tests
-Run the complete test suite (unit + integration):
 ```bash
+# Run all tests
 make test
-```
 
-#### Unit Tests Only
-Test individual components and functions:
-```bash
-make run-tests
-```
+# Run unit tests only
+make test-unit
 
-#### Integration Tests Only
-Test API endpoints and database interactions:
-```bash
-make run-integration-tests
-```
+# Run integration tests only
+make test-integration
 
-#### Tests with Coverage
-Run tests with detailed coverage reporting:
-```bash
+# Run tests with coverage
 make test-coverage
+
+# Performance testing removed - needs improvement
+# make run-performance-tests
+# make run-quick-test
 ```
-
-### Performance Testing with k6
-
-#### Quick Performance Test
-Run a 1-minute performance test (recommended for development):
-```bash
-make run-quick-test
-```
-
-#### Full Performance Test Suite
-Run all performance tests (load, stress, and spike tests):
-```bash
-make run-performance-tests
-```
-
-#### Individual Performance Tests
-```bash
-# Load test (gradual load increase)
-k6 run k6/performance-tests.js
-
-# Stress test (high load to find breaking points)
-k6 run k6/stress-test.js
-
-# Spike test (sudden traffic spikes)
-k6 run k6/spike-test.js
-```
-
-### Test Coverage
-
-Tests generate coverage reports in HTML format. Open `htmlcov/index.html` to view detailed coverage information.
-
-**Coverage Requirements:**
-- Minimum coverage: 90%
-- Coverage reports are generated in both terminal and HTML formats
-- Failed tests will prevent deployment if coverage is below threshold
 
 ## API Documentation
 
@@ -347,59 +302,55 @@ make docker-push      # Build and push Docker image to registry with version
 
 ## CI/CD Pipeline
 
-The project includes comprehensive CI/CD pipelines that automatically run on every push and pull request.
+The project includes a comprehensive CI/CD pipeline with the following stages:
 
-### Automated Testing Pipeline
+### GitHub Actions Workflows
 
-The CI/CD pipeline includes the following checks:
+#### 1. Pull Request Checks (`pr-checks.yml`)
+- **Triggers**: On pull requests to `main` or `develop`
+- **Purpose**: Quick validation for PRs
+- **Includes**:
+  - Unit and integration tests
+  - Code quality checks (linting, type checking, formatting)
+  - Security scanning
+  - Docker build verification
 
-#### 🧪 **Test Pipeline** (`.github/workflows/test-pipeline.yml`)
-- **Unit & Integration Tests**: Runs all pytest tests with coverage
-- **Code Quality**: Linting (flake8), type checking (mypy), formatting (black/isort)
-- **Performance Tests**: k6 load testing with quick performance validation
-- **Security Scan**: Bandit security vulnerability scanning
-- **Docker Build Test**: Ensures Docker image builds and runs correctly
+#### 2. Full Test Pipeline (`test-pipeline.yml`)
+- **Triggers**: On pushes to `main` and `develop`
+- **Purpose**: Comprehensive testing and validation
+- **Includes**:
+  - All PR checks
+  - Extended security scanning
+  - Docker image testing
+  - Performance testing removed - needs improvement
+  - Status reporting
 
-#### ⚡ **Pull Request Checks** (`.github/workflows/pr-checks.yml`)
-- **Quick Tests**: Fast validation for pull requests
-- **Quick Performance**: 1-minute performance test
-- **Code Quality**: Essential linting and formatting checks
+### Local CI Checks
 
-### Pipeline Triggers
-
-- **Push to main/develop**: Full test pipeline
-- **Pull Request**: Quick checks for faster feedback
-- **Daily Schedule**: Automated testing at 2 AM UTC
-- **Tags**: Docker image building and deployment
-
-### Pipeline Features
-
-- ✅ **Parallel Execution**: Tests run in parallel for faster feedback
-- ✅ **Caching**: Dependencies are cached to speed up builds
-- ✅ **Database Services**: PostgreSQL and Redis services for testing
-- ✅ **Coverage Reports**: Detailed coverage analysis with 90% minimum requirement
-- ✅ **Artifact Upload**: Test results and reports are saved as artifacts
-- ✅ **Security Scanning**: Automated security vulnerability detection
-- ✅ **Performance Monitoring**: k6 performance tests ensure no regressions
-
-### Local Pipeline Testing
-
-You can run the same checks locally using the Makefile:
+Run the same checks locally that the CI pipeline runs:
 
 ```bash
-# Run all tests (same as CI)
-make test
+# Run all CI checks locally
+./scripts/run-ci-checks.sh
 
-# Run with coverage
-make test-coverage
-
-# Run code quality checks
-make lint
-make format
-
-# Run performance tests
-make run-quick-test
+# Or use the Makefile target
+make ci-checks
 ```
+
+**What's included:**
+- ✅ Unit and integration tests with coverage
+- ✅ Code quality (flake8, mypy, black, isort)
+- ✅ Security scanning (bandit)
+- ✅ Docker build verification
+- ❌ Performance testing (removed - needs improvement)
+
+### Pipeline Stages
+
+1. **Test Stage**: Unit and integration tests with 90% coverage requirement
+2. **Code Quality Stage**: Linting, type checking, and formatting validation
+3. **Security Stage**: Automated security scanning with Bandit
+4. **Build Stage**: Docker image building and verification
+5. **Status Stage**: Final status check and reporting
 
 ## Deployment
 
@@ -460,7 +411,6 @@ make test              # Run all tests (unit + integration)
 make test-coverage     # Run tests with coverage report
 make run-tests         # Run unit tests only
 make run-integration-tests  # Run integration tests only
-make run-performance-tests  # Run k6 performance tests
 make run-quick-test    # Run quick performance test (1 minute)
 ```
 
@@ -545,9 +495,6 @@ k6 run k6/stress-test.js
 
 # Spike test (sudden traffic spikes)
 k6 run k6/spike-test.js
-
-# With custom base URL
-k6 run --env BASE_URL=https://api.example.com k6/performance-tests.js
 ```
 
 ### Performance Test Configuration

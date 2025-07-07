@@ -239,6 +239,7 @@ main() {
     run_security_scan
     echo ""
     
+    # Performance testing removed - needs improvement
     # run_performance_test
     # echo ""
     

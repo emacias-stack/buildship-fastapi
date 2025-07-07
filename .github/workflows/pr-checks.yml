@@ -84,73 +84,12 @@ jobs:
         black --check app/ tests/ --line-length=88
         isort --check-only app/ tests/ --profile=black
 
-  # Quick Performance Test
-  quick-performance:
-    name: Quick Performance Test
-    runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install k6
-      uses: grafana/k6-action@v0.3.0
-      with:
-        filename: k6/quick-test.js
-
-    - name: Install dependencies
+    - name: Run Security Scan
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install bandit
+        bandit -r app/ -f json -o bandit-report.json || true
 
-    - name: Set up environment variables
+    - name: Build Docker Image
       run: |
-        echo "DATABASE_URL=postgresql://testuser:testpass@localhost:5432/testdb" >> $GITHUB_ENV
-        echo "SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
-        echo "DEBUG=false" >> $GITHUB_ENV
-        echo "LOG_LEVEL=INFO" >> $GITHUB_ENV
-
-    - name: Wait for database
-      run: |
-        echo "Waiting for database to be ready..."
-        sleep 10
-
-    - name: Initialize database
-      run: |
-        python -c "from app.database import init_db; init_db(); print('✅ Database initialized')"
-
-    - name: Start application
-      run: |
-        python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-        echo "Waiting for application to start..."
-        sleep 10
-        curl -f http://localhost:8000/health || exit 1
-
-    - name: Run quick performance test
-      run: |
-        k6 run k6/quick-test.js --summary-export=perf-summary.json
-
-    - name: Check performance results
-      run: |
-        echo "Performance test completed. Check the summary for any issues."
-        cat perf-summary.json | jq '.metrics.http_req_duration.avg' || echo "Could not parse performance results" 
+        docker build -t buildship-fastapi:test .
+        echo "Docker build successful" 

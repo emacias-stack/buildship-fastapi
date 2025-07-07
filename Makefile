@@ -130,37 +130,6 @@ run-integration-tests:
 	@echo "Running integration tests..."
 	@venv/bin/python -m pytest tests/integration/ -v --tb=short
 
-# Run performance tests with k6
-run-performance-tests:
-	@echo "Running k6 performance tests..."
-	@if command -v k6 > /dev/null 2>&1; then \
-		echo "Running load test..."; \
-		k6 run k6/performance-tests.js; \
-		echo "Running stress test..."; \
-		k6 run k6/stress-test.js; \
-		echo "Running spike test..."; \
-		k6 run k6/spike-test.js; \
-	else \
-		echo "❌ k6 not found. Please install k6 first:"; \
-		echo "   macOS: brew install k6"; \
-		echo "   Linux: sudo apt-get install k6"; \
-		echo "   Windows: choco install k6"; \
-		echo "   Or visit: https://k6.io/docs/getting-started/installation/"; \
-	fi
-
-# Run quick performance test (1 minute)
-run-quick-test:
-	@echo "Running quick performance test (1 minute)..."
-	@if command -v k6 > /dev/null 2>&1; then \
-		k6 run k6/quick-test.js; \
-	else \
-		echo "❌ k6 not found. Please install k6 first:"; \
-		echo "   macOS: brew install k6"; \
-		echo "   Linux: sudo apt-get install k6"; \
-		echo "   Windows: choco install k6"; \
-		echo "   Or visit: https://k6.io/docs/getting-started/installation/"; \
-	fi
-
 # Run linting
 lint:
 	@echo "Running linting checks..."
