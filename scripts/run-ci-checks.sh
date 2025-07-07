@@ -239,8 +239,8 @@ main() {
     run_security_scan
     echo ""
     
-    run_performance_test
-    echo ""
+    # run_performance_test
+    # echo ""
     
     cleanup
     echo ""

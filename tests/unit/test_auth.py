@@ -2,30 +2,31 @@
 Unit tests for authentication module.
 """
 
-import pytest
 from datetime import timedelta
-from jose import jwt
-from fastapi import HTTPException, status
 from unittest.mock import patch
+
+import pytest
+from fastapi import HTTPException, status
+from jose import jwt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.auth import (
-    verify_password,
-    get_password_hash,
-    create_access_token,
-    verify_token,
     authenticate_user,
-    get_current_user,
+    create_access_token,
     get_current_active_user,
-    get_current_superuser,
-    get_current_user_optional,
     get_current_active_user_optional,
+    get_current_superuser,
+    get_current_user,
+    get_current_user_optional,
+    get_password_hash,
     get_user,
+    verify_password,
+    verify_token,
 )
 from app.config import settings
-from app.models import User, Base
+from app.models import Base, User
 
 # Create a test database for these tests
 test_engine = create_engine(
@@ -33,10 +34,7 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 class TestPasswordHashing:
@@ -81,8 +79,8 @@ class TestTokenCreation:
 
         # Decode token to verify expiry
         payload = jwt.decode(
-            token, settings.secret_key, algorithms=[
-                settings.algorithm])
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
         assert payload["sub"] == "testuser"
 
     def test_verify_token_valid(self):
@@ -288,8 +286,8 @@ class TestCurrentUserDependencies:
             token = create_access_token({"sub": test_user.username})
 
             # Mock the dependency
-            with patch('app.auth.oauth2_scheme', return_value=token):
-                with patch('app.auth.get_db', return_value=session):
+            with patch("app.auth.oauth2_scheme", return_value=token):
+                with patch("app.auth.get_db", return_value=session):
                     user = await get_current_user(token=token, db=session)
                     assert user is not None
                     assert user.username == test_user.username
@@ -369,7 +367,7 @@ class TestCurrentUserDependencies:
             session.refresh(test_user)
 
             # Mock get_current_user to return active user
-            with patch('app.auth.get_current_user', return_value=test_user):
+            with patch("app.auth.get_current_user", return_value=test_user):
                 user = await get_current_active_user(current_user=test_user)
                 assert user is not None
                 assert user.is_active
@@ -418,7 +416,7 @@ class TestCurrentUserDependencies:
                 is_superuser=True,
             )
 
-            with patch('app.auth.get_current_user', return_value=superuser):
+            with patch("app.auth.get_current_user", return_value=superuser):
                 user = await get_current_superuser(current_user=superuser)
                 assert user is not None
                 assert user.is_superuser
@@ -482,8 +480,8 @@ class TestOptionalAuthentication:
             token = create_access_token({"sub": test_user.username})
 
             # Mock the dependency
-            with patch('app.auth.oauth2_scheme', return_value=token):
-                with patch('app.auth.get_db', return_value=session):
+            with patch("app.auth.oauth2_scheme", return_value=token):
+                with patch("app.auth.get_db", return_value=session):
                     user = get_current_user_optional(token=token, db=session)
                     assert user is not None
                     assert user.username == test_user.username

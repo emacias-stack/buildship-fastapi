@@ -7,10 +7,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
-from app.database import Base, get_db
-from app.models import User, Item
 from app.auth import get_password_hash
+from app.database import Base, get_db
+from app.main import app
+from app.models import Item, User
 
 # Test database configuration
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -20,8 +20,7 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def override_get_db():
@@ -120,9 +119,7 @@ def admin_headers(client, test_superuser):
     """Get authentication headers for admin user."""
     response = client.post(
         "/api/v1/auth/token",
-        data={
-            "username": test_superuser.username,
-            "password": "adminpassword"},
+        data={"username": test_superuser.username, "password": "adminpassword"},
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

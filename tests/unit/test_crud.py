@@ -7,12 +7,21 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.crud import (
-    create_user, get_user_by_id, get_user_by_email, get_user_by_username,
-    update_user, delete_user, create_item, get_item_by_id, update_item,
-    delete_item, get_items, get_items_count
+    create_item,
+    create_user,
+    delete_item,
+    delete_user,
+    get_item_by_id,
+    get_items,
+    get_items_count,
+    get_user_by_email,
+    get_user_by_id,
+    get_user_by_username,
+    update_item,
+    update_user,
 )
-from app.models import User, Item, Base
-from app.schemas import UserCreate, UserUpdate, ItemCreate, ItemUpdate
+from app.models import Base, Item, User
+from app.schemas import ItemCreate, ItemUpdate, UserCreate, UserUpdate
 
 # Create a test database for these tests
 test_engine = create_engine(
@@ -20,10 +29,7 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 class TestUserCRUD:
@@ -487,12 +493,14 @@ class TestItemCRUD:
                 title="Item 1",
                 description="Description 1",
                 price=100,
-                owner_id=test_user.id)
+                owner_id=test_user.id,
+            )
             item2 = Item(
                 title="Item 2",
                 description="Description 2",
                 price=200,
-                owner_id=test_user.id)
+                owner_id=test_user.id,
+            )
             session.add_all([item1, item2])
             session.commit()
 
@@ -533,10 +541,18 @@ class TestItemCRUD:
             session.refresh(user2)
 
             # Create test items
-            item1 = Item(title="User1 Item", description="Description",
-                         price=100, owner_id=user1.id)
-            item2 = Item(title="User2 Item", description="Description",
-                         price=200, owner_id=user2.id)
+            item1 = Item(
+                title="User1 Item",
+                description="Description",
+                price=100,
+                owner_id=user1.id,
+            )
+            item2 = Item(
+                title="User2 Item",
+                description="Description",
+                price=200,
+                owner_id=user2.id,
+            )
             session.add_all([item1, item2])
             session.commit()
 
@@ -571,12 +587,14 @@ class TestItemCRUD:
                 title="Item 1",
                 description="Description 1",
                 price=100,
-                owner_id=test_user.id)
+                owner_id=test_user.id,
+            )
             item2 = Item(
                 title="Item 2",
                 description="Description 2",
                 price=200,
-                owner_id=test_user.id)
+                owner_id=test_user.id,
+            )
             session.add_all([item1, item2])
             session.commit()
 

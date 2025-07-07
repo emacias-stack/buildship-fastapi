@@ -2,16 +2,16 @@
 Integration tests for authentication endpoints.
 """
 
-from fastapi import status, FastAPI
+from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.api.v1.endpoints import auth as auth_endpoints
-from app.database import get_db
-from app.models import User, Base
 from app.auth import get_password_hash
+from app.database import get_db
+from app.models import Base, User
 
 # Create a test database for these tests
 test_engine = create_engine(
@@ -19,10 +19,7 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 def override_get_db():
@@ -36,10 +33,7 @@ def override_get_db():
 
 # Create a new FastAPI app for testing
 test_app = FastAPI()
-test_app.include_router(
-    auth_endpoints.router,
-    prefix="/api/v1/auth",
-    tags=["auth"])
+test_app.include_router(auth_endpoints.router, prefix="/api/v1/auth", tags=["auth"])
 test_app.dependency_overrides[get_db] = override_get_db
 client = TestClient(test_app)
 
@@ -271,8 +265,7 @@ class TestAuthEndpoints:
             "password": "password123",
             "full_name": "Lifecycle User",
         }
-        register_response = client.post(
-            "/api/v1/auth/register", json=user_data)
+        register_response = client.post("/api/v1/auth/register", json=user_data)
         assert register_response.status_code == status.HTTP_201_CREATED
 
         # 2. Login to get token

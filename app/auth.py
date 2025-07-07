@@ -4,14 +4,15 @@ Authentication utilities and JWT token management.
 
 from datetime import datetime, timedelta
 from typing import Optional
+
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+    OAuth2PasswordBearer,
+)
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status, Security
-from fastapi.security import (
-    OAuth2PasswordBearer,
-    HTTPBearer,
-    HTTPAuthorizationCredentials
-)
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -38,9 +39,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(
-        data: dict,
-        expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -51,9 +50,8 @@ def create_access_token(
         )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode,
-        settings.secret_key,
-        algorithm=settings.algorithm)
+        to_encode, settings.secret_key, algorithm=settings.algorithm
+    )
     return encoded_jwt
 
 
@@ -63,8 +61,8 @@ def verify_token(token: str) -> Optional[str]:
         return None
     try:
         payload = jwt.decode(
-            token, settings.secret_key, algorithms=[
-                settings.algorithm])
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
         username: str = payload.get("sub")
         if username is None:
             return None
@@ -78,10 +76,7 @@ def get_user(db: Session, username: str) -> Optional[User]:
     return db.query(User).filter(User.username == username).first()
 
 
-def authenticate_user(
-        db: Session,
-        username: str,
-        password: str) -> Optional[User]:
+def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     """Authenticate user with username and password."""
     user = get_user(db, username)
     if not user:
@@ -92,8 +87,8 @@ def authenticate_user(
 
 
 async def get_current_user(
-        token: Optional[str] = Depends(oauth2_scheme),
-        db: Session = Depends(get_db)) -> User:
+    token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> User:
     """Get current authenticated user."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,27 +111,28 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-        current_user: User = Depends(get_current_user)) -> User:
+    current_user: User = Depends(get_current_user),
+) -> User:
     """Get current active user."""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
-async def get_current_superuser(
-        current_user: User = Depends(get_current_user)) -> User:
+async def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
     """Get current superuser."""
     if not current_user.is_superuser:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions")
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+        )
     return current_user
 
 
 def get_current_user_optional(
-        credentials: Optional[HTTPAuthorizationCredentials] = Security(http_bearer),
-        token: Optional[str] = Depends(oauth2_scheme),
-        db: Session = Depends(get_db)) -> Optional[User]:
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(http_bearer),
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
     """Get current user with optional authentication (JWT or API key)."""
     if token:
         # Try JWT authentication
@@ -156,7 +152,7 @@ def get_current_user_optional(
 
 
 def get_current_active_user_optional(
-    current_user: Optional[User] = Depends(get_current_user_optional)
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> Optional[User]:
     """Get current active user with optional authentication."""
     if current_user and current_user.is_active:

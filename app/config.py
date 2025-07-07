@@ -2,7 +2,8 @@
 Configuration management for the FastAPI application.
 """
 
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -26,9 +27,7 @@ class Settings(BaseSettings):
     database_max_overflow: int = Field(default=40)
 
     # Security settings
-    secret_key: str = Field(
-        default="your-secret-key-change-in-production"
-    )
+    secret_key: str = Field(default="your-secret-key-change-in-production")
     algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=30)
 
@@ -62,22 +61,16 @@ class Settings(BaseSettings):
         if self.api_keys_raw is None:
             return []
         # api_keys_raw is guaranteed to be a string here
-        return [key.strip() for key in self.api_keys_raw.split(',') if key.strip()]
+        return [key.strip() for key in self.api_keys_raw.split(",") if key.strip()]
 
     def exclude_api_key_paths(self) -> List[str]:
         """Get exclude paths as list, parsing from comma-separated string if needed."""
         if self.exclude_api_key_paths_raw is None:
-            return [
-                "/docs",
-                "/redoc",
-                "/openapi.json",
-                "/health",
-                "/metrics",
-                "/"]
+            return ["/docs", "/redoc", "/openapi.json", "/health", "/metrics", "/"]
         # exclude_api_key_paths_raw is guaranteed to be a string here
         return [
             path.strip()
-            for path in self.exclude_api_key_paths_raw.split(',')
+            for path in self.exclude_api_key_paths_raw.split(",")
             if path.strip()
         ]
 

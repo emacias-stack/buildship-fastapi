@@ -1,8 +1,10 @@
-from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 from datetime import datetime
-from app.main import app
+from unittest.mock import MagicMock, patch
+
+from fastapi.testclient import TestClient
+
 from app.config import settings
+from app.main import app
 
 client = TestClient(app)
 
@@ -24,15 +26,14 @@ FULL_ITEM = {
         "is_active": True,
         "is_superuser": False,
         "created_at": datetime.utcnow().isoformat(),
-        "updated_at": None
-    }
+        "updated_at": None,
+    },
 }
 
 
 class TestRootEndpoint:
-
     def test_root_endpoint_debug(self):
-        with patch.object(settings, 'debug', True):
+        with patch.object(settings, "debug", True):
             response = client.get("/")
             assert response.status_code == 200
             data = response.json()
@@ -40,7 +41,7 @@ class TestRootEndpoint:
             assert data["docs"] == "/docs"
 
     def test_root_endpoint_no_debug(self):
-        with patch.object(settings, 'debug', False):
+        with patch.object(settings, "debug", False):
             response = client.get("/")
             assert response.status_code == 200
             data = response.json()
@@ -49,10 +50,8 @@ class TestRootEndpoint:
 
 
 class TestHealthCheck:
-
     def test_health_check_healthy(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.init_db"):
+        with patch("app.main.get_db") as mock_get_db, patch("app.main.init_db"):
             db = MagicMock()
             db.execute.return_value = None
             mock_get_db.return_value = (x for x in [db])
@@ -76,8 +75,9 @@ class TestHealthCheck:
             assert data["database"] in ("unhealthy", "healthy")
 
     def test_health_check_init_db_exception(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.init_db") as mock_init_db:
+        with patch("app.main.get_db") as mock_get_db, patch(
+            "app.main.init_db"
+        ) as mock_init_db:
             db = MagicMock()
             db.execute.return_value = None
             mock_init_db.side_effect = Exception("init error")
@@ -90,7 +90,6 @@ class TestHealthCheck:
 
 
 class TestMetrics:
-
     def test_metrics_endpoint(self):
         response = client.get("/metrics")
         assert response.status_code == 200
@@ -101,11 +100,10 @@ class TestMetrics:
 
 
 class TestPublicItems:
-
     def test_public_items_normal(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.get_items") as mock_get_items, \
-                patch("app.main.get_items_count") as mock_get_items_count:
+        with patch("app.main.get_db") as mock_get_db, patch(
+            "app.main.get_items"
+        ) as mock_get_items, patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = [FULL_ITEM]
@@ -120,9 +118,9 @@ class TestPublicItems:
             assert isinstance(data["items"], list)
 
     def test_public_items_empty(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.get_items") as mock_get_items, \
-                patch("app.main.get_items_count") as mock_get_items_count:
+        with patch("app.main.get_db") as mock_get_db, patch(
+            "app.main.get_items"
+        ) as mock_get_items, patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = []
@@ -137,9 +135,9 @@ class TestPublicItems:
             assert data["items"] == []
 
     def test_public_items_paging(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.get_items") as mock_get_items, \
-                patch("app.main.get_items_count") as mock_get_items_count:
+        with patch("app.main.get_db") as mock_get_db, patch(
+            "app.main.get_items"
+        ) as mock_get_items, patch("app.main.get_items_count") as mock_get_items_count:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             # 10 full items
@@ -158,10 +156,13 @@ class TestPublicItems:
             assert isinstance(data["items"], list)
 
     def test_public_items_with_user(self):
-        with patch("app.main.get_db") as mock_get_db, \
-                patch("app.main.get_items") as mock_get_items, \
-                patch("app.main.get_items_count") as mock_get_items_count, \
-                patch("app.main.get_current_active_user_optional") as mock_user:
+        with patch("app.main.get_db") as mock_get_db, patch(
+            "app.main.get_items"
+        ) as mock_get_items, patch(
+            "app.main.get_items_count"
+        ) as mock_get_items_count, patch(
+            "app.main.get_current_active_user_optional"
+        ) as mock_user:
             db = MagicMock()
             mock_get_db.return_value = (x for x in [db])
             mock_get_items.return_value = [FULL_ITEM]
@@ -174,7 +175,7 @@ class TestPublicItems:
                 "is_active": True,
                 "is_superuser": False,
                 "created_at": datetime.utcnow().isoformat(),
-                "updated_at": None
+                "updated_at": None,
             }
             response = client.get("/public/items")
             assert response.status_code == 200

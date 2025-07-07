@@ -3,20 +3,24 @@ Custom middleware for the FastAPI application.
 """
 
 import time
-import structlog
 from typing import Any, Callable, cast
+
+import structlog
 from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.applications import Starlette
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 
 # Configure structured logging
 # Choose the appropriate renderer based on settings
-renderer = (structlog.processors.JSONRenderer()
-            if settings.log_format == "json" else structlog.dev.ConsoleRenderer())
+renderer = (
+    structlog.processors.JSONRenderer()
+    if settings.log_format == "json"
+    else structlog.dev.ConsoleRenderer()
+)
 
 structlog.configure(
     processors=[
@@ -86,8 +90,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Strict-Transport-Security"] = \
-            "max-age=31536000; includeSubDomains"
+        response.headers[
+            "Strict-Transport-Security"
+        ] = "max-age=31536000; includeSubDomains"
 
         return response
 
@@ -116,7 +121,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return Response(
                 status_code=401,
                 content="API key required",
-                headers={"WWW-Authenticate": "ApiKey"}
+                headers={"WWW-Authenticate": "ApiKey"},
             )
 
         # Validate API key
@@ -124,7 +129,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return Response(
                 status_code=401,
                 content="Invalid API key",
-                headers={"WWW-Authenticate": "ApiKey"}
+                headers={"WWW-Authenticate": "ApiKey"},
             )
 
         return cast(Response, await call_next(request))
@@ -133,8 +138,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         """Check if API key validation should be skipped."""
 
         # Skip for configured exclude paths
-        if any(request.url.path.startswith(path)
-               for path in self.exclude_paths):
+        if any(request.url.path.startswith(path) for path in self.exclude_paths):
             return True
 
         # Skip for Swagger UI requests (check User-Agent)
@@ -144,7 +148,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             "swagger",
             "openapi",
             "fastapi",
-            "mozilla/5.0"  # Browser requests
+            "mozilla/5.0",  # Browser requests
         ]
 
         if any(agent in user_agent for agent in swagger_user_agents):
@@ -160,8 +164,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return True
 
         # Skip for localhost requests
-        if request.client and request.client.host in [
-                "127.0.0.1", "localhost", "::1"]:
+        if request.client and request.client.host in ["127.0.0.1", "localhost", "::1"]:
             return True
 
         return False

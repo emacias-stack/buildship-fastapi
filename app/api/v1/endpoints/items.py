@@ -3,17 +3,18 @@ Items endpoints for CRUD operations.
 """
 
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_active_user
 from app.crud import (
+    create_item,
+    delete_item,
     get_item_by_id,
     get_items,
     get_items_count,
-    create_item,
     update_item,
-    delete_item,
 )
 from app.database import get_db
 from app.models import User
@@ -24,17 +25,10 @@ router = APIRouter()
 
 @router.get("/", response_model=PaginatedResponse)
 async def read_items(
-        skip: int = Query(
-            0,
-            ge=0,
-            description="Number of items to skip"),
-        limit: int = Query(
-            100,
-            ge=1,
-            le=1000,
-            description="Number of items to return"),
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of items to return"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get paginated list of items."""
     items = get_items(db, skip=skip, limit=limit)
@@ -54,17 +48,10 @@ async def read_items(
 
 @router.get("/my-items", response_model=List[Item])
 async def read_my_items(
-        skip: int = Query(
-            0,
-            ge=0,
-            description="Number of items to skip"),
-        limit: int = Query(
-            100,
-            ge=1,
-            le=1000,
-            description="Number of items to return"),
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
+    skip: int = Query(0, ge=0, description="Number of items to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of items to return"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get current user's items."""
     items = get_items(db, skip=skip, limit=limit, owner_id=current_user.id)

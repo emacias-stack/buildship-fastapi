@@ -4,19 +4,20 @@ Main FastAPI application.
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from fastapi import FastAPI, Depends, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 from typing import Optional
 
-from app.config import settings
-from app.database import get_db, init_db
-from app.middleware import setup_middleware
-from app.schemas import HealthCheck, PaginatedResponse
+from fastapi import Depends, FastAPI, Query
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.api.v1.endpoints import auth, items
 from app.auth import get_current_active_user_optional
+from app.config import settings
 from app.crud import get_items, get_items_count
+from app.database import get_db, init_db
+from app.middleware import setup_middleware
 from app.models import User
+from app.schemas import HealthCheck, PaginatedResponse
 
 
 @asynccontextmanager
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     # Database tables will be created on first access or manually
     yield
     # Shutdown (if needed)
+
 
 # Create FastAPI application
 app = FastAPI(
@@ -40,17 +42,11 @@ app = FastAPI(
     openapi_tags=[
         {
             "name": "public",
-            "description": "Public endpoints that don't require authentication"
+            "description": "Public endpoints that don't require authentication",
         },
-        {
-            "name": "authentication",
-            "description": "Authentication endpoints"
-        },
-        {
-            "name": "items",
-            "description": "Items management (requires authentication)"
-        }
-    ]
+        {"name": "authentication", "description": "Authentication endpoints"},
+        {"name": "items", "description": "Items management (requires authentication)"},
+    ],
 )
 
 # Setup middleware

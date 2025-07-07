@@ -2,14 +2,14 @@
 Unit tests for database module.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from sqlalchemy import text
-from unittest.mock import patch, MagicMock
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import get_db, init_db, drop_db, reset_db, engine, SessionLocal, Base
+from app.database import Base, SessionLocal, drop_db, engine, get_db, init_db, reset_db
 
 # Create a test database for these tests
 test_engine = create_engine(
@@ -17,10 +17,7 @@ test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestSessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=test_engine)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 class TestDatabaseSession:
@@ -28,7 +25,7 @@ class TestDatabaseSession:
 
     def test_get_db_yields_session(self):
         """Test that get_db yields a database session."""
-        with patch('app.database.SessionLocal') as mock_session_local:
+        with patch("app.database.SessionLocal") as mock_session_local:
             mock_session = MagicMock()
             mock_session_local.return_value = mock_session
 
@@ -42,7 +39,7 @@ class TestDatabaseSession:
 
     def test_get_db_closes_session(self):
         """Test that get_db closes the session after yielding."""
-        with patch('app.database.SessionLocal') as mock_session_local:
+        with patch("app.database.SessionLocal") as mock_session_local:
             mock_session = MagicMock()
             mock_session_local.return_value = mock_session
 
@@ -65,17 +62,17 @@ class TestDatabaseSession:
 class TestDatabaseInitialization:
     """Test database initialization functions."""
 
-    @patch('app.database.Base.metadata.create_all')
+    @patch("app.database.Base.metadata.create_all")
     def test_init_db_creates_tables(self, mock_create_all):
         """Test that init_db creates all tables."""
         # Mock the imports from app.models
-        with patch('app.models.User'), patch('app.models.Item'):
+        with patch("app.models.User"), patch("app.models.Item"):
             init_db()
 
             # Verify create_all was called with the engine
             mock_create_all.assert_called_once_with(bind=engine)
 
-    @patch('app.database.Base.metadata.drop_all')
+    @patch("app.database.Base.metadata.drop_all")
     def test_drop_db_drops_tables(self, mock_drop_all):
         """Test that drop_db drops all tables."""
         drop_db()
@@ -83,10 +80,10 @@ class TestDatabaseInitialization:
         # Verify drop_all was called with the engine
         mock_drop_all.assert_called_once_with(bind=engine)
 
-    @patch('app.database.init_db')
+    @patch("app.database.init_db")
     def test_reset_db_calls_drop_and_init(self, mock_init_db):
         """Test that reset_db calls drop_db and then init_db."""
-        with patch('app.database.drop_db') as mock_drop_db:
+        with patch("app.database.drop_db") as mock_drop_db:
             reset_db()
 
             # Verify both functions were called in the correct order
@@ -105,8 +102,8 @@ class TestDatabaseEngine:
         """Test that the engine is created with correct configuration."""
         # Test that engine exists and has the expected attributes
         assert engine is not None
-        assert hasattr(engine, 'pool')
-        assert hasattr(engine, 'echo')
+        assert hasattr(engine, "pool")
+        assert hasattr(engine, "echo")
 
     def test_session_local_creation(self):
         """Test that SessionLocal is created correctly."""
@@ -118,7 +115,7 @@ class TestDatabaseEngine:
         """Test that Base is created correctly."""
         # Test that Base exists and has metadata
         assert Base is not None
-        assert hasattr(Base, 'metadata')
+        assert hasattr(Base, "metadata")
 
     def test_engine_pool_pre_ping(self):
         """Test that the engine has pool_pre_ping enabled."""
@@ -126,7 +123,7 @@ class TestDatabaseEngine:
         # We can't directly check the attribute, but we can verify the engine
         # was created
         assert engine is not None
-        assert hasattr(engine, 'pool')
+        assert hasattr(engine, "pool")
 
     def test_engine_pool_recycle(self):
         """Test that the engine has pool_recycle configured."""
@@ -134,7 +131,7 @@ class TestDatabaseEngine:
         # We can't directly check the attribute, but we can verify the engine
         # was created
         assert engine is not None
-        assert hasattr(engine, 'pool')
+        assert hasattr(engine, "pool")
 
 
 class TestDatabaseIntegration:
@@ -198,20 +195,20 @@ class TestDatabaseIntegration:
 class TestDatabaseErrorHandling:
     """Test database error handling scenarios."""
 
-    @patch('app.database.Base.metadata.create_all')
+    @patch("app.database.Base.metadata.create_all")
     def test_init_db_handles_errors(self, mock_create_all):
         """Test that init_db handles errors gracefully."""
         # Mock create_all to raise an exception
         mock_create_all.side_effect = Exception("Database error")
 
         # Mock the imports from app.models
-        with patch('app.models.User'), patch('app.models.Item'):
+        with patch("app.models.User"), patch("app.models.Item"):
             with pytest.raises(Exception) as exc_info:
                 init_db()
 
             assert "Database error" in str(exc_info.value)
 
-    @patch('app.database.Base.metadata.drop_all')
+    @patch("app.database.Base.metadata.drop_all")
     def test_drop_db_handles_errors(self, mock_drop_all):
         """Test that drop_db handles errors gracefully."""
         # Mock drop_all to raise an exception
@@ -222,10 +219,10 @@ class TestDatabaseErrorHandling:
 
         assert "Drop error" in str(exc_info.value)
 
-    @patch('app.database.init_db')
+    @patch("app.database.init_db")
     def test_reset_db_handles_drop_errors(self, mock_init_db):
         """Test that reset_db handles drop_db errors."""
-        with patch('app.database.drop_db') as mock_drop_db:
+        with patch("app.database.drop_db") as mock_drop_db:
             # Mock drop_db to raise an exception
             mock_drop_db.side_effect = Exception("Drop error")
 
@@ -236,10 +233,10 @@ class TestDatabaseErrorHandling:
             # Verify init_db was not called when drop_db fails
             mock_init_db.assert_not_called()
 
-    @patch('app.database.init_db')
+    @patch("app.database.init_db")
     def test_reset_db_handles_init_errors(self, mock_init_db):
         """Test that reset_db handles init_db errors."""
-        with patch('app.database.drop_db') as mock_drop_db:
+        with patch("app.database.drop_db") as mock_drop_db:
             # Mock init_db to raise an exception
             mock_init_db.side_effect = Exception("Init error")
 
@@ -257,12 +254,12 @@ class TestDatabaseConfiguration:
     def test_engine_pool_configuration(self):
         """Test that the engine is configured with correct pool settings."""
         # Test pool configuration
-        assert hasattr(engine.pool, '_pool')
-        assert hasattr(engine.pool, 'size')
-        assert hasattr(engine.pool, 'overflow')
+        assert hasattr(engine.pool, "_pool")
+        assert hasattr(engine.pool, "size")
+        assert hasattr(engine.pool, "overflow")
 
     def test_engine_echo_setting(self):
         """Test that the engine echo setting is configured."""
         # The echo setting should be based on settings.debug
-        assert hasattr(engine, 'echo')
+        assert hasattr(engine, "echo")
         assert isinstance(engine.echo, bool)
